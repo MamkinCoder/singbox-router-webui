@@ -5,19 +5,18 @@ Wants=network.target
 
 [Service]
 Type=simple
-User=sbweb
-Group=sbweb
+User=rpi
+Group=rpi
 WorkingDirectory=/opt/sb-webui
 
 Environment=PORT=3001
 Environment=BIND=127.0.0.1
 Environment=NODE_ENV=production
-Environment=HOME=/home/sbweb
+Environment=HOME=/home/rpi
+Environment=NPM_CONFIG_CACHE=/home/rpi/.npm
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-# ensure UI exists (fail fast with clear message)
 ExecStartPre=/usr/bin/test -f /opt/sb-webui/web/dist/index.html
-
 ExecStart=/usr/bin/node /opt/sb-webui/server.js
 
 Restart=on-failure
