@@ -14,13 +14,15 @@ export default function App() {
   return (
     <>
       <header className="header">
-        <div className="headerTitleRow">
-          <h1 className="title">Sing-box WebUI</h1>
-          <Status status={status} />
-        </div>
-        <div className="headerControls">
-          <Tabs tab={tab} setTab={setTab} />
-          <VpnCradles setStatus={setStatus} />
+        <div className="headerInner">
+          <div className="headerTitleRow">
+            <h1 className="title">Sing-box WebUI</h1>
+            <Status status={status} />
+          </div>
+          <div className="headerControls">
+            <Tabs tab={tab} setTab={setTab} />
+            <VpnCradles setStatus={setStatus} />
+          </div>
         </div>
       </header>
 
