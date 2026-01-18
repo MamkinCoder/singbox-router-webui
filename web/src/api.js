@@ -1,33 +1,45 @@
+function messageFromResponse(data) {
+  if (data && typeof data === 'object' && data.error) {
+    return `${data.error}${data.details?.length ? `: ${data.details.join('; ')}` : ''}`
+  }
+  if (typeof data === 'string') return data
+  return 'Request failed'
+}
+
+async function request(url, opts = {}) {
+  const r = await fetch(url, opts)
+  const text = await r.text()
+  let data
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    data = text
+  }
+
+  if (!r.ok) throw new Error(messageFromResponse(data))
+  return data
+}
+
 const api = {
-  async get(url) {
-    const r = await fetch(url)
-    const text = await r.text()
-    let data
-    try { data = text ? JSON.parse(text) : null } catch { data = text }
-    if (!r.ok) {
-      const msg = (data && typeof data === 'object' && data.error)
-        ? `${data.error}${data.details?.length ? `: ${data.details.join('; ')}` : ''}`
-        : (typeof data === 'string' ? data : 'Request failed')
-      throw new Error(msg)
-    }
-    return data
+  get(url) {
+    return request(url, { method: 'GET' })
   },
-  async put(url, body) {
-    const r = await fetch(url, {
+  put(url, body) {
+    return request(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    const text = await r.text()
-    let data
-    try { data = text ? JSON.parse(text) : null } catch { data = text }
-    if (!r.ok) {
-      const msg = (data && typeof data === 'object' && data.error)
-        ? `${data.error}${data.details?.length ? `: ${data.details.join('; ')}` : ''}`
-        : (typeof data === 'string' ? data : 'Request failed')
-      throw new Error(msg)
-    }
-    return data
+  },
+  post(url, body) {
+    return request(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  },
+  delete(url) {
+    return request(url, { method: 'DELETE' })
   },
 }
 

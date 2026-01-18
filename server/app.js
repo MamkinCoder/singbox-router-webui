@@ -15,6 +15,8 @@ const UI_DOMAINS_PATH = process.env.UI_DOMAINS_PATH || '/etc/sing-box/rules/vpn_
 const FLAT_RULESET_PATH = process.env.FLAT_RULESET_PATH || '/etc/sing-box/rules/vpn_domains.json';
 const CLIENTS_POLICY_PATH = process.env.CLIENTS_POLICY_PATH || '/etc/sing-box/clients_policy.json';
 const FRONTEND_DIST = path.join(__dirname, '..', 'web', 'dist');
+const VLESS_TEMPLATES_DIR = process.env.VLESS_TEMPLATES_DIR || path.join(__dirname, '..', 'vless-templates');
+const TEMPLATE_NAME_RE = /^[a-zA-Z0-9._-]+\.json$/;
 
 function createApp() {
   const app = express();
@@ -114,6 +116,107 @@ function deepMergeKeep(dst, src) {
     }
   }
   return out;
+}
+
+async function ensureVlessTemplatesDir() {
+  await fsp.mkdir(VLESS_TEMPLATES_DIR, { recursive: true });
+}
+
+function sanitizeTemplateFilename(name) {
+  const clean = String(name || '')
+    .trim()
+    .replace(/[#\\/]+/g, '_')
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/^[_-]+|[_-]+$/g, '')
+  return clean || 'vless-template'
+}
+
+function getTemplatePath(id) {
+  if (!TEMPLATE_NAME_RE.test(id)) {
+    throw new Error('Invalid template id')
+  }
+  return path.join(VLESS_TEMPLATES_DIR, id)
+}
+
+async function templateExists(file) {
+  try {
+    await fsp.access(file)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function extractNameFromVless(vless) {
+  try {
+    const parsed = new URL(vless)
+    const hash = (parsed.hash || '').replace(/^#/, '').trim()
+    if (hash) return hash
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+async function listVlessTemplates() {
+  await ensureVlessTemplatesDir()
+  const files = await fsp.readdir(VLESS_TEMPLATES_DIR)
+  const entries = []
+  for (const file of files) {
+    if (!TEMPLATE_NAME_RE.test(file)) continue
+    const full = path.join(VLESS_TEMPLATES_DIR, file)
+    let data
+    try {
+      const raw = await fsp.readFile(full, 'utf8')
+      data = JSON.parse(raw)
+    } catch {
+      continue
+    }
+    const stats = await fsp.stat(full)
+    entries.push({
+      id: file,
+      name: String(data?.name || file.replace(/\.json$/, '')),
+      created_at: stats.birthtimeMs,
+    })
+  }
+  entries.sort((a, b) => a.name.localeCompare(b.name))
+  return entries
+}
+
+async function readVlessTemplate(id) {
+  await ensureVlessTemplatesDir()
+  const full = getTemplatePath(id)
+  const raw = await fsp.readFile(full, 'utf8')
+  const data = JSON.parse(raw)
+  if (!data?.vless) throw new Error('Template missing vless string')
+  return { id, name: String(data.name || ''), vless: String(data.vless) }
+}
+
+async function saveVlessTemplate({ name, vless }) {
+  await ensureVlessTemplatesDir()
+  const displayName = String(name || '').trim() || extractNameFromVless(vless) || 'vless-template'
+  const base = sanitizeTemplateFilename(displayName)
+  let idx = 0
+  let candidate
+  while (true) {
+    const suffix = idx === 0 ? '' : `-${idx}`
+    candidate = `${base}${suffix}.json`
+    const full = path.join(VLESS_TEMPLATES_DIR, candidate)
+    if (!(await templateExists(full))) break
+    idx += 1
+  }
+  const payload = { name: displayName, vless: String(vless).trim() }
+  await fsp.writeFile(
+    path.join(VLESS_TEMPLATES_DIR, candidate),
+    JSON.stringify(payload, null, 2) + '\n',
+    'utf8'
+  )
+  return { id: candidate, name: displayName }
+}
+
+async function deleteVlessTemplate(id) {
+  const full = getTemplatePath(id)
+  await fsp.unlink(full)
 }
 
 async function singBoxStatus() {
@@ -341,17 +444,29 @@ function registerRoutes(app) {
   });
 
   app.put('/sb/api/vless', async (req, res) => {
-    const vless = req.body?.vless;
-    if (!vless) return res.status(400).json({ error: 'Expected {vless:"vless://..."}' });
+    const templateId = req.body?.template_id
+    let vless = req.body?.vless
+    if (!vless && templateId) {
+      try {
+        const tpl = await readVlessTemplate(templateId)
+        vless = tpl.vless
+      } catch (e) {
+        if (e.code === 'ENOENT' || /Invalid template/.test(String(e.message))) {
+          return res.status(404).json({ error: 'Template not found' })
+        }
+        return res.status(500).json({ error: 'Cannot read template', details: [String(e.message || e)] })
+      }
+    }
+    if (!vless) return res.status(400).json({ error: 'Expected {vless:"vless://..."} or {template_id:"..."}' })
 
-    let patch;
+    let patch
     try {
-      patch = parseVlessLink(vless);
+      patch = parseVlessLink(vless)
     } catch (e) {
       return res.status(400).json({
         error: e.message || 'Invalid VLESS link',
         details: e.details || undefined,
-      });
+      })
     }
 
     const cfg = await readJsonSafe(SINGBOX_CONFIG_PATH, null);
@@ -367,6 +482,56 @@ function registerRoutes(app) {
     await restartSingBox();
 
     res.json({ ok: true, updated: patch });
+  });
+
+  app.get('/sb/api/vless/templates', async (req, res) => {
+    try {
+      const templates = await listVlessTemplates();
+      res.json({ templates });
+    } catch (e) {
+      res.status(500).json({ error: 'Cannot read templates', details: [String(e?.message || e)] });
+    }
+  });
+
+  app.get('/sb/api/vless/templates/:id', async (req, res) => {
+    try {
+      const tpl = await readVlessTemplate(req.params.id);
+      res.json(tpl);
+    } catch (e) {
+      if (e.code === 'ENOENT') return res.status(404).json({ error: 'Template not found' });
+      res.status(500).json({ error: 'Cannot read template', details: [String(e?.message || e)] });
+    }
+  });
+
+  app.post('/sb/api/vless/templates', async (req, res) => {
+    const vless = req.body?.vless;
+    if (!vless) return res.status(400).json({ error: 'Expected {vless:"vless://..."}' });
+
+    try {
+      parseVlessLink(vless);
+    } catch (e) {
+      return res.status(400).json({
+        error: e.message || 'Invalid VLESS link',
+        details: e.details || undefined,
+      });
+    }
+
+    try {
+      const template = await saveVlessTemplate({ name: req.body?.name, vless });
+      res.json({ ok: true, template });
+    } catch (e) {
+      res.status(500).json({ error: 'Cannot save template', details: [String(e?.message || e)] });
+    }
+  });
+
+  app.delete('/sb/api/vless/templates/:id', async (req, res) => {
+    try {
+      await deleteVlessTemplate(req.params.id);
+      res.json({ ok: true });
+    } catch (e) {
+      if (e.code === 'ENOENT') return res.status(404).json({ error: 'Template not found' });
+      res.status(500).json({ error: 'Cannot delete template', details: [String(e?.message || e)] });
+    }
   });
 
 // TODO: clients

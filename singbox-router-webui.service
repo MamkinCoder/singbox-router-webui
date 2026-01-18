@@ -1,5 +1,5 @@
 [Unit]
-Description=Sing-box WebUI (API + React UI)
+Description=Sing-box WebUI
 After=network.target
 Wants=network.target
 
@@ -9,25 +9,20 @@ User=sbweb
 Group=sbweb
 WorkingDirectory=/opt/sb-webui
 
-# Bind only on localhost; nginx proxies it
 Environment=PORT=3001
 Environment=BIND=127.0.0.1
 Environment=NODE_ENV=production
+Environment=HOME=/home/sbweb
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-# Build React UI on every start/restart
-ExecStartPre=/usr/bin/npm --prefix /opt/sb-webui/web ci
-ExecStartPre=/usr/bin/npm --prefix /opt/sb-webui/web run build
+# ensure UI exists (fail fast with clear message)
+ExecStartPre=/usr/bin/test -f /opt/sb-webui/web/dist/index.html
 
-# Start backend
 ExecStart=/usr/bin/node /opt/sb-webui/server.js
 
 Restart=on-failure
 RestartSec=2
-TimeoutStartSec=300
-
-# (optional) a bit of hardening
-NoNewPrivileges=true
-PrivateTmp=true
+TimeoutStartSec=30
 
 [Install]
 WantedBy=multi-user.target
