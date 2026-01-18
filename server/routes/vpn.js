@@ -1,6 +1,6 @@
 'use strict';
 
-const { readJsonSafe, writeJsonWithSudoInstall } = require('../helpers/fs');
+const { readJsonSafe, readJsonDetailed, writeJsonWithSudoInstall } = require('../helpers/fs');
 const { restartSingBox, singBoxStatus } = require('../helpers/singbox');
 const {
   setVpnStateInConfig,
@@ -8,10 +8,17 @@ const {
 } = require('../helpers/vpnState');
 const { SINGBOX_CONFIG_PATH } = require('../config');
 
+function respondConfigError(res, err) {
+  return res.status(500).json({
+    error: `Cannot read ${SINGBOX_CONFIG_PATH}`,
+    details: [String(err?.message || err || 'unknown')],
+  });
+}
+
 function registerVpnRoutes(app) {
   app.get('/sb/api/vpn', async (req, res) => {
-    const cfg = await readJsonSafe(SINGBOX_CONFIG_PATH, null);
-    if (!cfg) return res.status(500).json({ error: `Cannot read ${SINGBOX_CONFIG_PATH}` });
+    const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
+    if (!cfg) return respondConfigError(res, error);
 
     const { active, status } = await singBoxStatus();
     const { enabled, policy } = getVpnStateFromConfig(cfg);
@@ -22,8 +29,8 @@ function registerVpnRoutes(app) {
     const enabled = !!req.body?.enabled;
     const policy = (req.body?.policy === 'all') ? 'all' : 'domains';
 
-    const cfg = await readJsonSafe(SINGBOX_CONFIG_PATH, null);
-    if (!cfg) return res.status(500).json({ error: `Cannot read ${SINGBOX_CONFIG_PATH}` });
+    const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
+    if (!cfg) return respondConfigError(res, error);
 
     setVpnStateInConfig(cfg, enabled, policy);
     await writeJsonWithSudoInstall(SINGBOX_CONFIG_PATH, cfg);

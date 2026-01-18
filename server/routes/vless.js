@@ -1,7 +1,7 @@
 'use strict';
 
 const { parseVlessLink } = require('../vless');
-const { readJsonSafe, writeJsonWithSudoInstall } = require('../helpers/fs');
+const { readJsonSafe, readJsonDetailed, writeJsonWithSudoInstall } = require('../helpers/fs');
 const { deepMergeKeep } = require('../helpers/merge');
 const {
   SINGBOX_CONFIG_PATH,
@@ -14,10 +14,17 @@ const {
 } = require('../templates');
 const { restartSingBox } = require('../helpers/singbox');
 
+function respondConfigError(res, err) {
+  return res.status(500).json({
+    error: `Cannot read ${SINGBOX_CONFIG_PATH}`,
+    details: [String(err?.message || err || 'unknown')],
+  });
+}
+
 function registerVlessRoutes(app) {
   app.get('/sb/api/vless', async (req, res) => {
-    const cfg = await readJsonSafe(SINGBOX_CONFIG_PATH, null);
-    if (!cfg) return res.status(500).json({ error: `Cannot read ${SINGBOX_CONFIG_PATH}` });
+    const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
+    if (!cfg) return respondConfigError(res, error);
 
     const ob = Array.isArray(cfg.outbounds) ? cfg.outbounds.find((x) => x && x.tag === 'vpn') : null;
     if (!ob) return res.status(404).json({ error: 'No outbound with tag "vpn" found' });
@@ -61,8 +68,8 @@ function registerVlessRoutes(app) {
       });
     }
 
-    const cfg = await readJsonSafe(SINGBOX_CONFIG_PATH, null);
-    if (!cfg) return res.status(500).json({ error: `Cannot read ${SINGBOX_CONFIG_PATH}` });
+    const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
+    if (!cfg) return respondConfigError(res, error);
     if (!Array.isArray(cfg.outbounds)) return res.status(500).json({ error: 'config.outbounds missing/invalid' });
 
     const idx = cfg.outbounds.findIndex((x) => x && x.tag === 'vpn');

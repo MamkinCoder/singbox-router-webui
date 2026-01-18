@@ -15,6 +15,7 @@ export default function VlessTab({ setStatus }) {
       setCurrent(JSON.stringify(cur, null, 2))
     } catch (e) {
       setCurrent(`Error: ${e.message}`)
+      setStatus({ msg: `Current VPN outbound load failed: ${e.message}`, ok: false })
     }
   }
 

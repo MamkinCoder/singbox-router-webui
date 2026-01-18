@@ -27,17 +27,23 @@ async function writeJsonWithSudoInstall(finalPath, obj) {
   await fsp.unlink(tmpPath).catch(() => {});
 }
 
-async function readJsonSafe(p, fallbackObj = null) {
+async function readJsonDetailed(p, fallbackObj = null) {
   try {
     const raw = await fsp.readFile(p, 'utf8');
-    return JSON.parse(raw);
-  } catch {
-    return fallbackObj;
+    return { data: JSON.parse(raw), error: null };
+  } catch (e) {
+    return { data: fallbackObj, error: e };
   }
+}
+
+async function readJsonSafe(p, fallbackObj = null) {
+  const { data } = await readJsonDetailed(p, fallbackObj);
+  return data;
 }
 
 module.exports = {
   run,
   writeJsonWithSudoInstall,
   readJsonSafe,
+  readJsonDetailed,
 };
