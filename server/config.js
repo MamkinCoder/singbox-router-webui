@@ -70,8 +70,6 @@ const DEFAULT_UI_DOMAINS = {
   ],
 };
 
-const PIHOLE_API_URL = process.env.PIHOLE_API_URL || 'http://127.0.0.1/admin/api.php?getQuerySources';
-
 const DEFAULT_CLIENTS_POLICY = { version: 1, clients: {} };
 
 module.exports = {
@@ -84,5 +82,4 @@ module.exports = {
   TEMPLATE_NAME_RE,
   DEFAULT_UI_DOMAINS,
   DEFAULT_CLIENTS_POLICY,
-  PIHOLE_API_URL,
 };

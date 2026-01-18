@@ -41,7 +41,7 @@ To run locally for testing you can start the backend with `node server.js` and t
 
 ## Router lease scraping
 
-If the Pi does not handle DHCP, the backend now reads Pi-hole’s API (`/admin/api.php?getQuerySources`) via `readDhcpLeases` and exposes `/sb/api/clients/leases`. This API source is the single lease provider, so ensure the Pi-hole UI/API is reachable before restarting the WebUI.
+`/sb/api/clients/leases` now reads the kernel neighbor table via `ip neigh` (see `server/helpers/pihole.js` which wraps `ip neigh show dev eth0`). Keeping the ARP cache populated (e.g., via Pi-hole activity or lan broadcasts) is sufficient so the Clients tab can discover devices without talking to the router or using Pi-hole’s API.
 
 ## License
 

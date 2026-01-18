@@ -1,12 +1,9 @@
 'use strict';
 
-const fs = require('fs');
-const fsp = fs.promises;
-const { PIHOLE_API_URL } = require('../config');
-const { readPiHoleClients } = require('./pihole');
+const { readLanClientsFromNeigh } = require('./pihole');
 
 async function readDhcpLeases() {
-  return readPiHoleClients();
+  return readLanClientsFromNeigh({ iface: 'eth0' });
 }
 
 module.exports = { readDhcpLeases };
