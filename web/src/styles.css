@@ -5,16 +5,47 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   background: #0f0f10;
   color: #e8e8ea;
+  min-height: 100vh;
+  padding: 0 12px 20px;
 }
 a { color: inherit; }
 
 .header {
   padding: 14px 16px;
   border-bottom: 1px solid #242427;
-  display:flex; gap:12px; align-items:center;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:stretch;
+}
+.headerTitleRow,
+.headerControls {
+  display:flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.headerTitleRow {
+  justify-content: space-between;
+}
+.headerControls {
+  justify-content: space-between;
 }
 .title { font-size: 14px; margin: 0; font-weight: 700; letter-spacing: .4px; }
-.tabs { display:flex; gap:8px; }
+.tabs {
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  flex: 1;
+  padding-bottom: 4px;
+}
+.tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.tabs::-webkit-scrollbar-thumb {
+  background: #2b2b30;
+  border-radius: 999px;
+}
 .tab {
   padding: 8px 10px;
   border: 1px solid #242427;
@@ -30,6 +61,14 @@ a { color: inherit; }
 .status { margin-left:auto; font-size: 12px; color:#a9a9b2; }
 .status.ok { color:#86efac; }
 .status.bad { color:#fca5a5; }
+
+.vpnControls {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
 
 .main { padding: 16px; max-width: 1100px; margin: 0 auto; }
 
@@ -144,3 +183,42 @@ a { color: inherit; }
 .switch.on .knob { left: 21px; }
 
 .switchLabel { font-size: 12px; color:#cfcfd6; user-select:none; }
+
+@media (max-width: 900px) {
+  .header {
+    padding: 12px 12px 8px;
+  }
+  .headerControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .vpnControls {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 0 8px 16px;
+  }
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .row .row {
+    width: 100%;
+  }
+  .btn,
+  .iconBtn {
+    width: 100%;
+    justify-content: center;
+  }
+  .tab {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+  }
+  .main {
+    padding: 12px;
+  }
+}

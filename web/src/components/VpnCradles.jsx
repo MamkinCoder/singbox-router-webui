@@ -65,7 +65,7 @@ export default function VpnCradles({ setStatus }) {
   const allTraffic = state.policy === 'all'
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+    <div className="vpnControls">
       <Cradle
         on={vpnEnabled}
         setOn={(v) => push({ enabled: v, policy: state.policy })}
