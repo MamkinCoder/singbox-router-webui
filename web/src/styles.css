@@ -1,0 +1,146 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: #0f0f10;
+  color: #e8e8ea;
+}
+a { color: inherit; }
+
+.header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #242427;
+  display:flex; gap:12px; align-items:center;
+}
+.title { font-size: 14px; margin: 0; font-weight: 700; letter-spacing: .4px; }
+.tabs { display:flex; gap:8px; }
+.tab {
+  padding: 8px 10px;
+  border: 1px solid #242427;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  background: transparent;
+  color: inherit;
+}
+.tab.active { border-color: #3a3a3f; background: #19191c; }
+
+.status { margin-left:auto; font-size: 12px; color:#a9a9b2; }
+.status.ok { color:#86efac; }
+.status.bad { color:#fca5a5; }
+
+.main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+
+.row { display:flex; gap:12px; flex-wrap: wrap; align-items: center; }
+.muted { color:#a9a9b2; font-size: 12px; }
+
+.btn {
+  border: 1px solid #2b2b30; background:#17171a; color:#e8e8ea;
+  padding: 8px 10px; border-radius: 10px; cursor:pointer;
+}
+.btn:hover { background:#1b1b1f; }
+.btn.primary { border-color:#3a3a3f; background:#1d1d22; }
+.btn.danger { border-color:#5a2b2b; background:#221415; }
+
+.input, .textarea {
+  background:#121214; border:1px solid #2b2b30; border-radius: 10px;
+  padding: 8px 10px; color:#e8e8ea; width: 100%;
+}
+.textarea { min-height: 140px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+.card { border:1px solid #242427; border-radius: 14px; padding: 12px; background:#121214; }
+
+.split { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+@media(max-width: 900px){ .split{ grid-template-columns: 1fr; } }
+
+/* ===== Groups grid ===== */
+.groupsGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media(max-width: 1100px){ .groupsGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media(max-width: 700px){ .groupsGrid{ grid-template-columns: 1fr; } }
+
+.groupCard{
+  border:1px solid #242427; border-radius: 14px; background:#101012;
+  overflow:hidden; position:relative; min-height: 240px;
+  display:flex; flex-direction:column;
+}
+.groupHeader{
+  padding: 10px 10px;
+  border-bottom:1px solid #242427;
+  display:flex; gap:8px; align-items:center;
+}
+.groupTitle{ font-weight:700; font-size: 13px; }
+.pill { font-size: 12px; padding: 2px 8px; border:1px solid #2b2b30; border-radius: 999px; color:#cfcfd6; }
+.groupBody{ padding: 10px; display:flex; flex-direction:column; gap:10px; flex:1; }
+
+.cornerToggle{
+  position:absolute; top:10px; right:10px;
+  transform: scale(1.05);
+}
+
+.domainsList{
+  display:flex; flex-direction:column; gap:8px;
+  max-height: 170px; overflow:auto; padding-right: 4px;
+}
+
+.chip{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px;
+  border:1px solid #2b2b30; background:#141417;
+  padding: 6px 10px; border-radius: 10px;
+}
+.chip code{ font-size: 12px; overflow:hidden; text-overflow:ellipsis; }
+.chipX{ cursor:pointer; opacity:.8; padding: 0 6px; }
+.chipX:hover{ opacity:1; }
+
+.twoCols{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media(max-width: 900px){ .twoCols{ grid-template-columns: 1fr; } }
+
+.small{ max-width: 240px; }
+
+.groupCard.disabled{
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+
+.iconBtn{
+  border: 1px solid #2b2b30;
+  background:#17171a;
+  color:#e8e8ea;
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor:pointer;
+}
+.iconBtn:hover{ background:#1b1b1f; }
+
+
+.switchRow { display:flex; align-items:center; gap:10px; margin-left: 12px; }
+
+.switch {
+  width: 44px; height: 26px;
+  border-radius: 999px;
+  border: 1px solid #2b2b30;
+  background: #141417;
+  position: relative;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.switch.on { background: #1d1d22; border-color:#3a3a3f; }
+.switch.disabled { opacity: .55; cursor: not-allowed; }
+
+.knob {
+  width: 22px; height: 22px;
+  border-radius: 999px;
+  background: #e8e8ea;
+  position: absolute;
+  top: 1px; left: 1px;
+  transition: left 120ms ease;
+}
+.switch.on .knob { left: 21px; }
+
+.switchLabel { font-size: 12px; color:#cfcfd6; user-select:none; }
