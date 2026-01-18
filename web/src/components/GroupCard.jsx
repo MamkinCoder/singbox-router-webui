@@ -13,10 +13,18 @@ export default function GroupCard({ group, onChange, onDelete }) {
 
   const toggleEnabled = () => onChange({ ...group, enabled: !enabled })
 
+  const normalizeDomain = (value) => {
+    const next = String(value || '').trim().toLowerCase().replace(/^\.+/, '').replace(/\.$/, '')
+    return next ? next : null
+  }
+
   const add = () => {
-    const d = (addDomain || '').trim().toLowerCase().replace(/^\.+/, '').replace(/\.$/, '')
-    if (!d) return
-    const next = new Set([...(group.domains || []), d])
+    const values = (addDomain || '')
+      .split(/\s+/)
+      .map(normalizeDomain)
+      .filter(Boolean)
+    if (!values.length) return
+    const next = new Set([...(group.domains || []), ...values])
     onChange({ ...group, domains: Array.from(next) })
     setAddDomain('')
   }
@@ -106,7 +114,7 @@ export default function GroupCard({ group, onChange, onDelete }) {
           <input
             className="input"
             value={addDomain}
-            placeholder="add domain_suffix (example: chatgpt.com)"
+            placeholder="add domain_suffix (example: chatgpt.com). space/newline separated values ok"
             onChange={(e) => setAddDomain(e.target.value)}
           />
           <button className="btn primary" onClick={add}>

@@ -24,6 +24,7 @@ To run locally for testing you can start the backend with `node server.js` and t
   - `/sb/api/domains` – domain groups
   - `/sb/api/vless` – patch outbound via shared parser
   - `/sb/api/vpn` – toggle mode/policy
+  - `/sb/api/clients/leases` – optional DHCP data pulled from the router export script
 
 ## Runtime Constraints
 
@@ -37,6 +38,10 @@ To run locally for testing you can start the backend with `node server.js` and t
 - If the UI reports validation errors from `/sb/api/vless`, the new parser in `server/vless.js` returns structured details so paste errors are visible.
 - VLESS input now runs extra validation: only known query params (`security`, `flow`, `sni`, `fp`, `pbk`, `sid`, `spx`, etc.) are accepted and templates are validated before they are saved. Typos triggered an unknown parameter error so you know why a string was rejected.
 - When debugging, follow the AGENTS guidance: check Unbound → Pi-hole DNS → sing-box → nftables.
+
+## Router lease scraping
+
+If the Pi does not handle DHCP, the backend now reads Pi-hole’s API (`/admin/api.php?getQuerySources`) via `readDhcpLeases` and exposes `/sb/api/clients/leases`. This API source is the single lease provider, so ensure the Pi-hole UI/API is reachable before restarting the WebUI.
 
 ## License
 

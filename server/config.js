@@ -70,7 +70,7 @@ const DEFAULT_UI_DOMAINS = {
   ],
 };
 
-const DHCP_LEASES_PATH = process.env.DHCP_LEASES_PATH || '/var/lib/misc/dnsmasq.leases';
+const PIHOLE_API_URL = process.env.PIHOLE_API_URL || 'http://127.0.0.1/admin/api.php?getQuerySources';
 
 const DEFAULT_CLIENTS_POLICY = { version: 1, clients: {} };
 
@@ -84,5 +84,5 @@ module.exports = {
   TEMPLATE_NAME_RE,
   DEFAULT_UI_DOMAINS,
   DEFAULT_CLIENTS_POLICY,
-  DHCP_LEASES_PATH,
+  PIHOLE_API_URL,
 };
