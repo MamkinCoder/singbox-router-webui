@@ -41,7 +41,16 @@ To run locally for testing you can start the backend with `node server.js` and t
 
 ## Router lease scraping
 
-`/sb/api/clients/leases` now reads the kernel neighbor table via `ip neigh` (see `server/helpers/pihole.js` which wraps `ip neigh show dev eth0`). Keeping the ARP cache populated (e.g., via Pi-hole activity or lan broadcasts) is sufficient so the Clients tab can discover devices without talking to the router or using Pi-hole’s API.
+`/sb/api/clients/leases` now reads the kernel neighbor table via `ip neigh` (see `server/helpers/pihole.js`). Keeping the ARP cache populated is sufficient for discovering devices. When you toggle “Force VPN,” the backend rewrites `/etc/sing-box/config.json` by injecting a `source_ip_cidr` rule before your `rule_set`, restarts sing-box, and the forced IPs are evaluated ahead of the domain list. Entries look like:
+
+```json
+{
+  "source_ip_cidr": [
+    "192.168.0.102/32"
+  ],
+  "outbound": "vpn"
+}
+```
 
 ## License
 

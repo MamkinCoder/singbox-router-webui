@@ -70,6 +70,7 @@ const DEFAULT_UI_DOMAINS = {
   ],
 };
 
+const FORCE_VPN_IPS_PATH = process.env.FORCE_VPN_IPS_PATH || '/etc/sing-box/rules/force_vpn_ips.json';
 const DEFAULT_CLIENTS_POLICY = { version: 1, clients: {} };
 
 module.exports = {
@@ -82,4 +83,5 @@ module.exports = {
   TEMPLATE_NAME_RE,
   DEFAULT_UI_DOMAINS,
   DEFAULT_CLIENTS_POLICY,
+  FORCE_VPN_IPS_PATH,
 };

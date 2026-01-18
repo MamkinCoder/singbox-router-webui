@@ -53,6 +53,7 @@ export default function ClientsTab({ setStatus }) {
       await api.put(`/sb/api/clients/${encodeURIComponent(client.mac)}`, {
         name: client.name,
         force_vpn: forceVpn,
+        ip: client.ip,
       })
       setPolicy((prev) => ({
         ...prev,
@@ -83,6 +84,7 @@ export default function ClientsTab({ setStatus }) {
       await api.put(`/sb/api/clients/${encodeURIComponent(client.mac)}`, {
         name: targetName,
         force_vpn: client.force_vpn,
+        ip: client.ip,
       })
       setPolicy((prev) => ({
         ...prev,
