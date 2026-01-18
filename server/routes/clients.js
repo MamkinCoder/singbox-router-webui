@@ -2,11 +2,21 @@
 
 const { CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY } = require('../config');
 const { readJsonSafe, writeJsonWithSudoInstall } = require('../helpers/fs');
+const { readDhcpLeases } = require('../helpers/leases');
 
 function registerClientsRoutes(app) {
   app.get('/sb/api/clients', async (req, res) => {
     const pol = await readJsonSafe(CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY);
     res.json(pol);
+  });
+
+  app.get('/sb/api/clients/leases', async (req, res) => {
+    try {
+      const leases = await readDhcpLeases();
+      res.json({ leases });
+    } catch (e) {
+      res.status(500).json({ error: 'Cannot read DHCP leases', details: [String(e.message || e)] });
+    }
   });
 
   app.put('/sb/api/clients/:id', async (req, res) => {

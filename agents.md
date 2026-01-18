@@ -1,7 +1,9 @@
 # AGENTS.md — Raspberry Pi Transparent VPN Gateway
+
 **sing-box (VLESS Reality) + Pi-hole + Unbound + React WebUI**
 
-This file exists so that **any new ChatGPT / coding agent** can be dropped into this repository and immediately understand:
+This file exists so that **any new ChatGPT / coding agent** can be dropped into this project and immediately understand:
+
 - what this project is
 - how traffic flows
 - which configs matter
@@ -13,7 +15,7 @@ It reflects the **final, working state** after all debugging.
 
 ## High-level goal
 
-Provide a **transparent, split‑tunnel VPN gateway** for LAN clients **without installing VPN software on clients**.
+Provide a **transparent, split-tunnel VPN gateway** for LAN clients **without installing VPN software on clients**.
 
 - Router still does DHCP
 - Raspberry Pi is the LAN gateway
@@ -47,6 +49,7 @@ Provide a **transparent, split‑tunnel VPN gateway** for LAN clients **without 
 ```
 
 Interfaces:
+
 - `eth0` → LAN
 - `wlan0` → WAN uplink
 
@@ -59,8 +62,6 @@ Interfaces:
 - DNS handed to clients: `192.168.0.4`
 - Router WAN gateway stays ISP
 
-⚠️ **Never reboot the Pi while router already points to it unless DNS is confirmed healthy.**
-
 ---
 
 ## DNS stack (FINAL)
@@ -68,27 +69,18 @@ Interfaces:
 ### Pi-hole
 
 Purpose:
+
 - LAN DNS
 - Ad/tracker blocking
 - Local DNS records (`vpn.home`, `pi.hole`)
 
-Pi-hole is **DNS only**. It is **not used for routing decisions**.
-
 Config:
+
 ```
 /etc/pihole/pihole.toml
 ```
 
-Important web config (Pi-hole v6+):
-```toml
-[webserver]
-port = "127.0.0.1:8081,[::1]:8081"
-domain = "pi.hole"
-```
-
 Pi-hole web UI is **only on localhost** and is exposed via nginx.
-
----
 
 ### Unbound (critical dependency)
 
@@ -97,26 +89,15 @@ Pi-hole web UI is **only on localhost** and is exposed via nginx.
 - Provides local recursion
 
 Config:
+
 ```
 /etc/unbound/unbound.conf.d/pi-hole.conf
 ```
 
 Final decision:
+
 - ❌ DNSSEC disabled (root.key corruption caused outages)
 - ✅ Stability > theory
-
-Minimal stable config:
-```conf
-server:
-  interface: 127.0.0.1
-  port: 5335
-  do-ip4: yes
-  do-ip6: no
-  do-udp: yes
-  do-tcp: yes
-  module-config: "iterator"
-  val-permissive-mode: yes
-```
 
 ⚠️ **If Unbound is down, everything breaks (DNS, VPN, routing).**
 
@@ -128,80 +109,47 @@ server:
 
 - Installed at: `/usr/bin/sing-box`
 - Runs as systemd service
-- Provides:
-  - Transparent TPROXY inbound (LAN)
-  - SOCKS inbound (`127.0.0.1:1080`) for testing
-  - VLESS Reality outbound
 
 Main config:
+
 ```
 /etc/sing-box/config.json
 ```
-
----
 
 ### Domain-based VPN routing
 
 sing-box routes traffic by **sniffing TLS SNI**, not DNS.
 
 Rules file:
+
 ```
 /etc/sing-box/rules/vpn_domains.json
 ```
 
 Generated from UI source file:
+
 ```
 /etc/sing-box/rules/vpn_domains_ui.json
 ```
-
-Only domains in this list are routed through VPN when in domain mode.
-
----
-
-## VPN modes (IMPORTANT)
-
-sing-box is **always running**. We never stop the service in normal operation.
-
-Two independent toggles exist:
-
-### 1. VPN Enabled / Disabled
-
-- **Enabled = false** → safe direct mode
-  - sing-box running
-  - all traffic goes direct
-  - tproxy still active (no blackhole)
-
-- **Enabled = true** → VPN routing active
-
-### 2. Policy: Domains vs All traffic
-
-- **Domains** → only domains from ruleset go through VPN
-- **All** → all traffic goes through VPN
-  - LAN / RFC1918 addresses are explicitly bypassed
-
-These are controlled by editing sing-box routing config and restarting sing-box (safe).
 
 ---
 
 ## Firewall & routing (nftables)
 
 Single authoritative file:
+
 ```
 /etc/nftables.conf
 ```
 
 Responsibilities:
+
 - Firewall (default-drop)
 - NAT (LAN → WAN)
 - TPROXY interception for LAN
 
-Key rules:
-- TPROXY only on `eth0`
-- NAT only on `wlan0`
-- DNS excluded from TPROXY
-- OUTPUT chain untouched
-
 Policy routing:
+
 - fwmark → table `tproxy`
 - `tproxy` table routes to `lo`
 
@@ -214,6 +162,7 @@ Routing rules are installed via **NetworkManager dispatcher**, not systemd hacks
 ### Purpose
 
 Single control plane for:
+
 - editing VPN domain lists
 - editing VLESS config
 - toggling VPN mode
@@ -225,21 +174,24 @@ No SSH required for normal operation.
 
 ### Backend
 
-- Node.js + Express
+- Node.js backend (Express)
 - Runs as systemd service
-- User: `sbweb`
+- User: `rpi`
 
-Paths:
+Backend entry:
+
 ```
 /opt/sb-webui/server.js
 ```
 
 API prefix:
+
 ```
 /sb/api/*
 ```
 
 Important endpoints:
+
 - `/sb/api/domains`
 - `/sb/api/vless`
 - `/sb/api/vpn`
@@ -248,36 +200,78 @@ Important endpoints:
 
 ### Frontend
 
-- React (Vite)
-- Built output:
+- React + Vite
+- Frontend folder:
+
+```
+/opt/sb-webui/web
+```
+
+- Build output:
+
 ```
 /opt/sb-webui/web/dist
 ```
 
-Served by backend (static files).
+- Served by backend as static files.
 
-**Frontend is built manually or via separate build service.**
-It is NOT rebuilt on every backend restart.
+#### systemd build notes (FINAL)
+
+Problems encountered:
+
+- corrupted `node_modules` from early installs
+- `vite: not found` under systemd
+- devDependencies silently omitted
+
+Final stable solution:
+
+- always install dev deps explicitly
+- do not rely on PATH for Vite
+
+Recommended `package.json` build script:
+
+```json
+"build": "node ./node_modules/vite/bin/vite.js build"
+```
 
 ---
 
 ## systemd services
 
-### sb-webui.service
+### sb-webui.service (FINAL — single service builds + serves)
 
-- Runs backend only
-- Does NOT run npm install/build
-- Fails fast if UI build missing
+This unit intentionally:
+
+1. installs dependencies (including dev)
+2. builds frontend
+3. verifies `dist/index.html`
+4. starts backend
+
+Unit file:
+
+```
+/etc/systemd/system/sb-webui.service
+```
+
+Core logic:
 
 ```ini
-ExecStartPre=/usr/bin/test -f /opt/sb-webui/web/dist/index.html
+ExecStartPre=/bin/bash -lc 'cd /opt/sb-webui/web; npm install --include=dev; npm run build; test -f dist/index.html'
 ExecStart=/usr/bin/node /opt/sb-webui/server.js
 ```
 
-### sb-webui-build.service (oneshot)
+Important notes:
 
-- Builds frontend safely
-- Run manually when UI changes
+- `TimeoutStartSec` must be large enough for Vite build on Raspberry Pi
+- `StartLimitIntervalSec` / `StartLimitBurst` belong in `[Unit]`
+
+Useful commands:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart sb-webui
+sudo journalctl -u sb-webui -n 200 --no-pager
+```
 
 ---
 
@@ -287,6 +281,7 @@ ExecStart=/usr/bin/node /opt/sb-webui/server.js
 - Routes by hostname
 
 Hosts:
+
 - `vpn.home/` → WebUI
 - `vpn.home/admin/` → Pi-hole
 - `pi.hole/` → Pi-hole
@@ -297,22 +292,31 @@ Pi-hole API (`/api/`) is proxied correctly so graphs work.
 
 ## Debugging rules (learned the hard way)
 
-### If something breaks:
+### If something breaks
 
 1. Check **Unbound** first
 2. Check Pi-hole DNS
 3. Check sing-box logs
 4. Check nftables
+5. Check WebUI build/service logs
 
-### Commands that actually help:
+### Commands that actually help
 
 ```bash
 dig @127.0.0.1 google.com
 journalctl -u unbound
 journalctl -u sing-box
+journalctl -u sb-webui -n 200 --no-pager
 nft list ruleset
 ip rule show
 ```
+
+### WebUI-specific failure patterns
+
+- `npm ERR! canceled`
+  - Usually means the build process was interrupted or dependencies were broken
+- `vite: not found` (exit 127)
+  - Fix: force dev deps + explicit Vite binary path
 
 ### Things that mislead:
 
@@ -347,4 +351,3 @@ ip rule show
 - Domains are explicit
 
 Do not redesign this unless you understand why each decision was made.
-

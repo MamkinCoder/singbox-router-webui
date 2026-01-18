@@ -70,6 +70,8 @@ const DEFAULT_UI_DOMAINS = {
   ],
 };
 
+const DHCP_LEASES_PATH = process.env.DHCP_LEASES_PATH || '/var/lib/misc/dnsmasq.leases';
+
 const DEFAULT_CLIENTS_POLICY = { version: 1, clients: {} };
 
 module.exports = {
@@ -82,4 +84,5 @@ module.exports = {
   TEMPLATE_NAME_RE,
   DEFAULT_UI_DOMAINS,
   DEFAULT_CLIENTS_POLICY,
+  DHCP_LEASES_PATH,
 };

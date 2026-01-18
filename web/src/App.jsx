@@ -23,7 +23,7 @@ export default function App() {
       <main className="main">
         {tab === 'domains' && <DomainsTab setStatus={setStatus} />}
         {tab === 'vless' && <VlessTab setStatus={setStatus} />}
-        {tab === 'clients' && <ClientsTab />}
+        {tab === 'clients' && <ClientsTab setStatus={setStatus} />}
       </main>
     </>
   )
