@@ -6,7 +6,7 @@ export default function Tabs({ tab, setTab }) {
   )
   return (
     <div className="tabs">
-      {mk('domains', 'Domainss')}
+      {mk('domains', 'Domains')}
       {mk('vless', 'VLESS')}
       {mk('clients', 'Clients')}
     </div>
