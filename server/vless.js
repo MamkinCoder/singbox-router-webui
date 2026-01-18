@@ -44,6 +44,29 @@ function parseVlessLink(vless) {
   if (!Number.isInteger(server_port) || server_port <= 0 || server_port > 65535) errors.push('Invalid server port');
 
   const q = u.searchParams;
+  const allowedQueryKeys = new Set([
+    'type',
+    'security',
+    'encryption',
+    'flow',
+    'sni',
+    'servername',
+    'fp',
+    'fingerprint',
+    'pbk',
+    'publickey',
+    'sid',
+    'shortid',
+    'spx',
+  ]);
+  const seen = new Set();
+  for (const key of q.keys()) {
+    const normalized = key.toLowerCase();
+    if (!allowedQueryKeys.has(normalized) && !seen.has(normalized)) {
+      errors.push(`Unexpected query parameter "${key}"`);
+    }
+    seen.add(normalized);
+  }
 
   const type = (q.get('type') || '').toLowerCase();
   if (type && type !== 'tcp') errors.push(`Unsupported type="${type}" (only tcp supported)`);

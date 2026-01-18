@@ -35,6 +35,7 @@ To run locally for testing you can start the backend with `node server.js` and t
 
 - Keep the domain list source under version control; `buildFlatRulesFromGroups` regenerates `vpn_domains.json`.
 - If the UI reports validation errors from `/sb/api/vless`, the new parser in `server/vless.js` returns structured details so paste errors are visible.
+- VLESS input now runs extra validation: only known query params (`security`, `flow`, `sni`, `fp`, `pbk`, `sid`, `spx`, etc.) are accepted and templates are validated before they are saved. Typos triggered an unknown parameter error so you know why a string was rejected.
 - When debugging, follow the AGENTS guidance: check Unbound → Pi-hole DNS → sing-box → nftables.
 
 ## License
