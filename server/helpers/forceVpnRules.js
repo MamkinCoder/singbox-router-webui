@@ -49,6 +49,11 @@ async function applyForceVpnRules(policy) {
   ensureRoute(cfg);
   removeExistingRule(cfg);
 
+  if (!ips.length) {
+    await writeJsonWithSudoInstall(SINGBOX_CONFIG_PATH, cfg);
+    return;
+  }
+
   const rule = {
     source_ip_cidr: ips,
     outbound: 'vpn',

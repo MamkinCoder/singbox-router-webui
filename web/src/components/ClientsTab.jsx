@@ -43,34 +43,55 @@ export default function ClientsTab({ setStatus }) {
         ip: lease?.ip || record.ip || 'unknown',
         name,
         force_vpn: !!record.force_vpn,
+        force_udp_vpn: !!record.force_udp_vpn,
       }
     })
   }, [leases, policy])
 
-  const updateClient = async (client, forceVpn) => {
+  const persistClient = async (client, overrides = {}, busyMsg, successMsg) => {
+    const payload = {
+      name: overrides.name ?? client.name,
+      force_vpn: overrides.force_vpn ?? client.force_vpn,
+      force_udp_vpn: overrides.force_udp_vpn ?? client.force_udp_vpn,
+      ip: client.ip,
+    }
+
     try {
-      setStatus({ msg: `${forceVpn ? 'Forcing' : 'Releasing'} ${client.name}…`, ok: null })
-      await api.put(`/sb/api/clients/${encodeURIComponent(client.mac)}`, {
-        name: client.name,
-        force_vpn: forceVpn,
-        ip: client.ip,
-      })
+      setStatus({ msg: busyMsg, ok: null })
+      await api.put(`/sb/api/clients/${encodeURIComponent(client.mac)}`, payload)
       setPolicy((prev) => ({
         ...prev,
         clients: {
           ...prev.clients,
           [client.mac]: {
             ...(prev.clients?.[client.mac] || {}),
-            name: client.name,
-            force_vpn: forceVpn,
+            ...payload,
           },
         },
       }))
-      setStatus({ msg: `${client.name} ${forceVpn ? 'will' : 'will no longer'} force VPN`, ok: true })
+      setStatus({ msg: successMsg, ok: true })
+      return payload
     } catch (e) {
       setStatus({ msg: `Client update failed: ${e.message}`, ok: false })
+      throw e
     }
   }
+
+  const updateVpn = (client, enable) =>
+    persistClient(
+      client,
+      { force_vpn: enable },
+      `${enable ? 'Forcing' : 'Releasing'} ${client.name}…`,
+      `${client.name} ${enable ? 'will' : 'will no longer'} force VPN`,
+    )
+
+  const updateUdp = (client, enable) =>
+    persistClient(
+      client,
+      { force_udp_vpn: enable },
+      `${enable ? 'Enabling' : 'Disabling'} non-gaming mode for ${client.name}…`,
+      `Non-gaming mode ${enable ? 'enabled' : 'disabled'} for ${client.name}`,
+    )
 
   const saveName = async (client) => {
     const targetName = (editingNames[client.mac] ?? '').trim()
@@ -80,31 +101,19 @@ export default function ClientsTab({ setStatus }) {
     }
 
     try {
-      setStatus({ msg: `Saving name for ${client.mac}…`, ok: null })
-      await api.put(`/sb/api/clients/${encodeURIComponent(client.mac)}`, {
-        name: targetName,
-        force_vpn: client.force_vpn,
-        ip: client.ip,
-      })
-      setPolicy((prev) => ({
-        ...prev,
-        clients: {
-          ...prev.clients,
-          [client.mac]: {
-            ...(prev.clients?.[client.mac] || {}),
-            name: targetName,
-            force_vpn: client.force_vpn,
-          },
-        },
-      }))
+      await persistClient(
+        client,
+        { name: targetName },
+        `Saving name for ${client.mac}…`,
+        `Name for ${targetName} saved`,
+      )
       setEditingNames((prev) => {
         const next = { ...prev }
         delete next[client.mac]
         return next
       })
-      setStatus({ msg: `Name for ${targetName} saved`, ok: true })
-    } catch (e) {
-      setStatus({ msg: `Client update failed: ${e.message}`, ok: false })
+    } catch {
+      /* status already handled */
     }
   }
 
@@ -162,24 +171,35 @@ export default function ClientsTab({ setStatus }) {
                         {client.ip} • {client.mac}
                       </div>
                     </div>
-                    <div className="row" style={{ gap: 6 }}>
-                      <button
-                        className="btn"
-                        onClick={() =>
-                          setEditingNames((prev) => ({
-                            ...prev,
-                            [client.mac]: client.name,
-                          }))
-                        }
-                      >
-                        Edit name
-                      </button>
-                      <button
-                        className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
-                        onClick={() => updateClient(client, !client.force_vpn)}
-                      >
-                        {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
-                      </button>
+                    <div className="column" style={{ alignItems: 'flex-end', gap: 6 }}>
+                      <div className="row" style={{ gap: 6 }}>
+                        <button
+                          className="btn"
+                          onClick={() =>
+                            setEditingNames((prev) => ({
+                              ...prev,
+                              [client.mac]: client.name,
+                            }))
+                          }
+                        >
+                          Edit name
+                        </button>
+                        <button
+                          className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
+                          onClick={() => updateVpn(client, !client.force_vpn)}
+                        >
+                          {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
+                        </button>
+                      </div>
+                      <label className="checkbox" style={{ fontSize: 12 }}>
+                        <input
+                          type="checkbox"
+                          checked={client.force_udp_vpn}
+                          onChange={() => updateUdp(client, !client.force_udp_vpn)}
+                        />
+                        {' '}
+                        Non-gaming mode (force UDP through VPN)
+                      </label>
                     </div>
                   </>
                 )}
