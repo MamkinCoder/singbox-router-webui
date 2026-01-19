@@ -98,14 +98,14 @@ export default function VlessTab({ setStatus }) {
     <>
       <div className="split">
         <div className="card">
-        <div className="legacyRowBlock">
-          <div>
-            <div style={{ fontWeight: 700 }}>Paste VLESS</div>
-            <div className="muted">Updates outbounds[tag=vpn] in /etc/sing-box/config.json</div>
-          </div>
-          <button className="btn primary" onClick={apply}>
-            Apply & restart
-          </button>
+          <div className="legacyRowBlock">
+            <div>
+              <div className="legacyRowBlockTitle">Paste VLESS</div>
+              <div className="legacyRowBlockSubtitle">Updates outbounds[tag=vpn] in /etc/sing-box/config.json</div>
+            </div>
+            <button className="btn primary" onClick={apply}>
+              Apply & restart
+            </button>
         </div>
         <div className="legacyRowBlock legacyRowBlockColumn">
           <textarea
@@ -135,7 +135,7 @@ export default function VlessTab({ setStatus }) {
       </div>
 
       <div className="card">
-        <div style={{ fontWeight: 700 }}>Saved VLESS templates</div>
+        <div className="legacyRowBlockTitle" style={{ marginBottom: 6 }}>Saved VLESS templates</div>
         {templatesLoading ? (
           <div className="muted" style={{ marginTop: 10 }}>
             Loading…

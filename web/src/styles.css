@@ -199,18 +199,29 @@ optgroup {
 @media(max-width: 700px){ .groupsGrid{ grid-template-columns: 1fr; } }
 
 .groupCard{
-  border:1px solid var(--panel-border); border-radius: 0; background:#0a2000;
+  border:2px solid var(--panel-border);
+  border-radius: 0;
+  background:#131c00;
   overflow:hidden; position:relative; min-height: 240px;
   display:flex; flex-direction:column;
 }
 .groupHeader{
   padding: 10px 10px;
-  border-bottom:1px solid var(--panel-border);
+  border-bottom:2px solid var(--panel-border);
+  background:#0f2400;
   display:flex; gap:8px; align-items:center;
 }
 .groupTitle{ font-weight:700; font-size: 13px; }
 .pill { font-size: 12px; padding: 2px 8px; border:1px solid var(--panel-border); border-radius: 0; color: var(--text); background:#0f2200; }
-.groupBody{ padding: 10px; display:flex; flex-direction:column; gap:10px; flex:1; }
+.groupBody{
+  padding: 10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  flex:1;
+  background: #070f00;
+  border-top:1px solid #162900;
+}
 
 .cornerToggle{
   position:absolute; top:10px; right:10px;
@@ -345,7 +356,9 @@ optgroup {
 }
 .legacyRowBlockTitle {
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.6;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
 }
 .legacyRowBlockSubtitle {
   font-size: 12px;
@@ -483,4 +496,17 @@ optgroup {
   .main {
     padding: 12px;
   }
+}
+.card pre {
+  font-family: 'WebPlus HP 100LX 6x8', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: #070f00;
+  border: 1px solid var(--panel-border);
+  border-radius: 0;
+  padding: 10px;
+  line-height: 1.4;
+}
+.templateList div pre {
+  background: transparent;
+  border: none;
+  padding: 0;
 }
