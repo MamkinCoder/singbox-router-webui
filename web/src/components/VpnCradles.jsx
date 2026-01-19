@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import api from '../api.js'
+import { cleanError } from '../utils.js'
 
 function Cradle({ on, setOn, label, disabled = false, title }) {
   return (
@@ -31,7 +32,7 @@ export default function VpnCradles({ setStatus }) {
         status: r.status ?? null,
       })
     } catch (e) {
-      setStatus({ msg: `VPN status fetch failed: ${e.message}`, ok: false })
+      setStatus({ msg: `VPN status fetch failed: ${cleanError(e)}`, ok: false })
     }
   }
 
@@ -56,7 +57,7 @@ export default function VpnCradles({ setStatus }) {
         ok: true,
       })
     } catch (e) {
-      setStatus({ msg: `VPN apply failed: ${e.message}`, ok: false })
+      setStatus({ msg: `VPN apply failed: ${cleanError(e)}`, ok: false })
       await refresh()
     }
   }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import api from '../api.js'
+import { cleanError } from '../utils.js'
 
 export default function VlessTab({ setStatus }) {
   const [vless, setVless] = useState('')
@@ -14,8 +15,9 @@ export default function VlessTab({ setStatus }) {
       const cur = await api.get('/sb/api/vless')
       setCurrent(JSON.stringify(cur, null, 2))
     } catch (e) {
-      setCurrent(`Error: ${e.message}`)
-      setStatus({ msg: `Current VPN outbound load failed: ${e.message}`, ok: false })
+      const message = cleanError(e)
+      setCurrent(`Error: ${message}`)
+      setStatus({ msg: `Current VPN outbound load failed: ${message}`, ok: false })
     }
   }
 
@@ -25,7 +27,7 @@ export default function VlessTab({ setStatus }) {
       const data = await api.get('/sb/api/vless/templates')
       setTemplates(Array.isArray(data.templates) ? data.templates : [])
     } catch (e) {
-      setStatus({ msg: `Templates load failed: ${e.message}`, ok: false })
+      setStatus({ msg: `Templates load failed: ${cleanError(e)}`, ok: false })
     } finally {
       setTemplatesLoading(false)
     }
@@ -45,7 +47,7 @@ export default function VlessTab({ setStatus }) {
       await refresh()
       await refreshTemplates()
     } catch (e) {
-      setStatus({ msg: `VLESS apply failed: ${e.message}`, ok: false })
+      setStatus({ msg: `VLESS apply failed: ${cleanError(e)}`, ok: false })
     }
   }
 
@@ -58,7 +60,7 @@ export default function VlessTab({ setStatus }) {
       setTemplateName('')
       await refreshTemplates()
     } catch (e) {
-      setStatus({ msg: `Template save failed: ${e.message}`, ok: false })
+      setStatus({ msg: `Template save failed: ${cleanError(e)}`, ok: false })
     }
   }
 
@@ -69,7 +71,7 @@ export default function VlessTab({ setStatus }) {
       setStatus({ msg: `Applied ${name}`, ok: true })
       await refresh()
     } catch (e) {
-      setStatus({ msg: `Template apply failed: ${e.message}`, ok: false })
+      setStatus({ msg: `Template apply failed: ${cleanError(e)}`, ok: false })
     }
   }
 
@@ -79,7 +81,7 @@ export default function VlessTab({ setStatus }) {
       setStatus({ msg: 'Template deleted', ok: true })
       await refreshTemplates()
     } catch (e) {
-      setStatus({ msg: `Template delete failed: ${e.message}`, ok: false })
+      setStatus({ msg: `Template delete failed: ${cleanError(e)}`, ok: false })
     }
   }
 
@@ -90,7 +92,7 @@ export default function VlessTab({ setStatus }) {
       setTemplateName(tpl.name || '')
       setStatus({ msg: `Loaded ${tpl.name || 'template'}`, ok: true })
     } catch (e) {
-      setStatus({ msg: `Template load failed: ${e.message}`, ok: false })
+      setStatus({ msg: `Template load failed: ${cleanError(e)}`, ok: false })
     }
   }
 
