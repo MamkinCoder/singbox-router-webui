@@ -98,17 +98,25 @@ export default function VlessTab({ setStatus }) {
     <>
       <div className="split">
         <div className="card">
-          <div className="legacyRowBlock">
-            <div>
-              <div style={{ fontWeight: 700 }}>Paste VLESS</div>
-              <div className="muted">Updates outbounds[tag=vpn] in /etc/sing-box/config.json</div>
-            </div>
-            <button className="btn primary" onClick={apply}>
-              Apply & restart
-            </button>
+        <div className="legacyRowBlock">
+          <div>
+            <div style={{ fontWeight: 700 }}>Paste VLESS</div>
+            <div className="muted">Updates outbounds[tag=vpn] in /etc/sing-box/config.json</div>
           </div>
-          <div className="legacyRowBlock">
-            <input
+          <button className="btn primary" onClick={apply}>
+            Apply & restart
+          </button>
+        </div>
+        <div className="legacyRowBlock legacyRowBlockColumn">
+          <textarea
+            className="textarea legacyRowBlockInputs"
+            value={vless}
+            onChange={(e) => setVless(e.target.value)}
+            placeholder="vless://UUID@host:443?..."
+          />
+        </div>
+        <div className="legacyRowBlock">
+          <input
               className="input legacyRowBlockInputs"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -140,8 +148,8 @@ export default function VlessTab({ setStatus }) {
                 className="legacyRowBlock"
               >
                 <div>
-                  <div style={{ fontWeight: 700 }}>{tpl.name}</div>
-                  <div className="muted" style={{ fontSize: 12 }}>
+                  <div className="legacyRowBlockTitle">{tpl.name}</div>
+                  <div className="legacyRowBlockSubtitle">
                     {tpl.id}
                   </div>
                 </div>

@@ -126,8 +126,8 @@ export default function ClientsTab({ setStatus }) {
         <div className="clientsList">
           <div className="clientsTableHeader">
             <span>Client</span>
-            <span>Actions</span>
-            <span>Routing</span>
+            <span>Force VPN</span>
+            <span>UDP</span>
           </div>
           {clients.map((client) => {
             const editing = editingNames[client.mac]
@@ -135,19 +135,52 @@ export default function ClientsTab({ setStatus }) {
               <div key={client.mac} className="clientsListRow">
                 <div className="clientsListCell clientsListCellClient">
                   {editing !== undefined ? (
-                    <input
-                      className="input clientsListEditInput"
-                      value={editing}
-                      onChange={(e) =>
-                        setEditingNames((prev) => ({
-                          ...prev,
-                          [client.mac]: e.target.value,
-                        }))
-                      }
-                    />
+                    <div className="legacyEditRow">
+                      <input
+                        className="input clientsListEditInput"
+                        value={editing}
+                        onChange={(e) =>
+                          setEditingNames((prev) => ({
+                            ...prev,
+                            [client.mac]: e.target.value,
+                          }))
+                        }
+                      />
+                      <div className="legacyRowBlockActions">
+                        <button className="btn primary" onClick={() => saveName(client)}>
+                          Save
+                        </button>
+                        <button
+                          className="btn"
+                          onClick={() =>
+                            setEditingNames((prev) => {
+                              const next = { ...prev }
+                              delete next[client.mac]
+                              return next
+                            })
+                          }
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <>
-                      <div className="legacyClientName">{client.name}</div>
+                      <div className="legacyClientNameRow">
+                        <span className="legacyClientName">{client.name}</span>
+                        <button
+                          className="iconBtn legacyEditIcon"
+                          onClick={() =>
+                            setEditingNames((prev) => ({
+                              ...prev,
+                              [client.mac]: client.name,
+                            }))
+                          }
+                          title="Edit name"
+                        >
+                          ✎
+                        </button>
+                      </div>
                       <div className="legacyClientMeta">
                         {client.ip} • {client.mac}
                       </div>
@@ -155,45 +188,12 @@ export default function ClientsTab({ setStatus }) {
                   )}
                 </div>
                 <div className="clientsListCell clientsListCellActions">
-                  {editing !== undefined ? (
-                    <div className="legacyActionGroup">
-                      <button className="btn primary" onClick={() => saveName(client)}>
-                        Save
-                      </button>
-                      <button
-                        className="btn"
-                        onClick={() =>
-                          setEditingNames((prev) => {
-                            const next = { ...prev }
-                            delete next[client.mac]
-                            return next
-                          })
-                        }
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="legacyActionGroup">
-                      <button
-                        className="btn"
-                        onClick={() =>
-                          setEditingNames((prev) => ({
-                            ...prev,
-                            [client.mac]: client.name,
-                          }))
-                        }
-                      >
-                        Edit name
-                      </button>
-                      <button
-                        className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
-                        onClick={() => updateVpn(client, !client.force_vpn)}
-                      >
-                        {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
-                      </button>
-                    </div>
-                  )}
+                  <button
+                    className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
+                    onClick={() => updateVpn(client, !client.force_vpn)}
+                  >
+                    {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
+                  </button>
                 </div>
                 <div className="clientsListCell clientsListCellRouting">
                   <label className="checkbox legacyCheckboxLabel">

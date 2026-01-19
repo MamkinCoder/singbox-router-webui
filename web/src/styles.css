@@ -1,8 +1,8 @@
 :root {
   color-scheme: dark;
-  --primary-bg: #123400;
+  --primary-bg: #0b1e00;
   --tile-color: #cbdd7f;
-  --panel-bg: #0b2300;
+  --panel-bg: #0a1d00;
   --panel-border: #0f2d00;
   --muted: #cad492;
   --text: #fefeeb;
@@ -90,6 +90,15 @@ a {
     box-shadow: 0 0 24px 9px rgba(203, 221, 127, 0.45);
   }
 }
+
+@keyframes breatheGlowFast {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 111, 111, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px 8px rgba(255, 111, 111, 0.65);
+  }
+}
 .tabs,
 .tab,
 .pill,
@@ -159,7 +168,11 @@ optgroup {
 .btn.primary { border-color: var(--tile-color); background:#154c00; }
 .btn.primary:hover { background:#1f5700; }
 .btn.danger { border-color:#7c1e1e; background:#2f1200; }
-.btn.danger:hover { border-color:#ff7f7f; background:#3e1b00; }
+.btn.danger:hover {
+  border-color:#ff7f7f;
+  background:#3e1b00;
+  animation: breatheGlowFast 1.5s ease-in-out infinite;
+}
 
 .input, .textarea {
   background:#102300;
@@ -205,17 +218,28 @@ optgroup {
 }
 
 .domainsList{
-  display:flex; flex-direction:column; gap:8px;
-  max-height: 170px; overflow:auto; padding-right: 4px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  max-height: 170px;
+  overflow:auto;
+  padding: 0;
+  border: 1px solid var(--panel-border);
+  background: #070f00;
 }
 
 .chip{
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   gap:10px;
-  border:1px solid var(--panel-border);
-  background:#0f2900;
+  border-bottom:1px solid var(--panel-border);
+  background:#0c2000;
   padding: 6px 10px;
   border-radius: 0;
+}
+.chip:nth-child(even){
+  background:#050b00;
 }
 .chip code{ font-size: 12px; overflow:hidden; text-overflow:ellipsis; }
 .chipX{ cursor:pointer; opacity:.8; padding: 0 6px; }
@@ -288,11 +312,13 @@ optgroup {
 }
 .legacyClientName {
   font-weight: 700;
+  line-height: 1.5;
 }
 .legacyClientMeta {
   font-size: 12px;
-  margin-top: 2px;
+  margin-top: 3px;
   color: var(--muted);
+  line-height: 1.5;
 }
 .legacyActionGroup {
   display: flex;
@@ -317,6 +343,16 @@ optgroup {
 .legacyRowBlock .muted {
   font-size: 12px;
 }
+.legacyRowBlockTitle {
+  font-weight: 700;
+  line-height: 1.5;
+}
+.legacyRowBlockSubtitle {
+  font-size: 12px;
+  margin-top: 3px;
+  color: var(--muted);
+  line-height: 1.4;
+}
 .legacyRowBlockActions {
   display: flex;
   gap: 8px;
@@ -326,8 +362,38 @@ optgroup {
   flex: 1;
   min-width: 180px;
 }
+.legacyRowBlockColumn {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.legacyRowBlockColumn .textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  margin-top: 6px;
+}
 .legacyCheckboxLabel {
   font-size: 12px;
+}
+.legacyClientNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: space-between;
+}
+.legacyEditIcon {
+  padding: 2px 6px;
+  border: 1px solid var(--panel-border);
+  background: #0e2300;
+  color: var(--text);
+  cursor: pointer;
+}
+.legacyEditRow {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .twoCols{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -357,7 +423,7 @@ optgroup {
   width: 44px;
   height: 26px;
   border: 1px solid var(--panel-border);
-  background: #0f3300;
+  background: #061400;
   position: relative;
   cursor: pointer;
   flex: 0 0 auto;
