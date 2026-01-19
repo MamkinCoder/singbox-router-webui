@@ -110,9 +110,9 @@ export default function GroupCard({ group, onChange, onDelete }) {
 
 
       <div className="groupBody">
-        <div className="row">
+        <div className="legacyRowBlock">
           <input
-            className="input"
+            className="input legacyRowBlockInputs"
             value={addDomain}
             placeholder="add domain_suffix (example: chatgpt.com). space/newline separated values ok"
             onChange={(e) => setAddDomain(e.target.value)}

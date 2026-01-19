@@ -123,19 +123,20 @@ export default function ClientsTab({ setStatus }) {
       {loading ? (
         <div className="muted" style={{ marginTop: 6 }}>Loading clients…</div>
       ) : clients.length ? (
-        <div className="clientsList" style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="clientsList">
+          <div className="clientsTableHeader">
+            <span>Client</span>
+            <span>Actions</span>
+            <span>Routing</span>
+          </div>
           {clients.map((client) => {
             const editing = editingNames[client.mac]
             return (
-              <div
-                key={client.mac}
-                className="row"
-                style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}
-              >
-                {editing !== undefined ? (
-                  <>
+              <div key={client.mac} className="clientsListRow">
+                <div className="clientsListCell clientsListCellClient">
+                  {editing !== undefined ? (
                     <input
-                      className="input"
+                      className="input clientsListEditInput"
                       value={editing}
                       onChange={(e) =>
                         setEditingNames((prev) => ({
@@ -143,9 +144,19 @@ export default function ClientsTab({ setStatus }) {
                           [client.mac]: e.target.value,
                         }))
                       }
-                      style={{ flex: 1, minWidth: 180 }}
                     />
-                    <div className="row" style={{ gap: 6 }}>
+                  ) : (
+                    <>
+                      <div className="legacyClientName">{client.name}</div>
+                      <div className="legacyClientMeta">
+                        {client.ip} • {client.mac}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="clientsListCell clientsListCellActions">
+                  {editing !== undefined ? (
+                    <div className="legacyActionGroup">
                       <button className="btn primary" onClick={() => saveName(client)}>
                         Save
                       </button>
@@ -162,47 +173,39 @@ export default function ClientsTab({ setStatus }) {
                         Cancel
                       </button>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{client.name}</div>
-                      <div className="muted" style={{ fontSize: 12 }}>
-                        {client.ip} • {client.mac}
-                      </div>
+                  ) : (
+                    <div className="legacyActionGroup">
+                      <button
+                        className="btn"
+                        onClick={() =>
+                          setEditingNames((prev) => ({
+                            ...prev,
+                            [client.mac]: client.name,
+                          }))
+                        }
+                      >
+                        Edit name
+                      </button>
+                      <button
+                        className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
+                        onClick={() => updateVpn(client, !client.force_vpn)}
+                      >
+                        {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
+                      </button>
                     </div>
-                    <div className="column" style={{ alignItems: 'flex-end', gap: 6 }}>
-                      <div className="row" style={{ gap: 6 }}>
-                        <button
-                          className="btn"
-                          onClick={() =>
-                            setEditingNames((prev) => ({
-                              ...prev,
-                              [client.mac]: client.name,
-                            }))
-                          }
-                        >
-                          Edit name
-                        </button>
-                        <button
-                          className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
-                          onClick={() => updateVpn(client, !client.force_vpn)}
-                        >
-                          {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
-                        </button>
-                      </div>
-                      <label className="checkbox" style={{ fontSize: 12 }}>
-                        <input
-                          type="checkbox"
-                          checked={client.force_udp_vpn}
-                          onChange={() => updateUdp(client, !client.force_udp_vpn)}
-                        />
-                        {' '}
-                        Non-gaming mode (force UDP through VPN)
-                      </label>
-                    </div>
-                  </>
-                )}
+                  )}
+                </div>
+                <div className="clientsListCell clientsListCellRouting">
+                  <label className="checkbox legacyCheckboxLabel">
+                    <input
+                      type="checkbox"
+                      checked={client.force_udp_vpn}
+                      onChange={() => updateUdp(client, !client.force_udp_vpn)}
+                    />
+                    {' '}
+                    Non-gaming mode
+                  </label>
+                </div>
               </div>
             )
           })}

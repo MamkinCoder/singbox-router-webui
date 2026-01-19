@@ -54,13 +54,15 @@ export default function DomainsTab({ setStatus }) {
 
   return (
     <>
-      <div className="row" style={{ marginBottom: 12 }}>
-        <button className="btn primary" onClick={addGroup}>
-          + Add group
-        </button>
-        <button className="btn primary" onClick={save}>
-          Save & restart
-        </button>
+      <div className="legacyRowBlock">
+        <div className="legacyRowBlockActions">
+          <button className="btn primary" onClick={addGroup}>
+            + Add group
+          </button>
+          <button className="btn primary" onClick={save}>
+            Save & restart
+          </button>
+        </div>
         <span className="muted">
           enabled domains: {counts.enabled} / total: {counts.total}
         </span>

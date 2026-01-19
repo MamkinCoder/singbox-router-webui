@@ -98,7 +98,7 @@ export default function VlessTab({ setStatus }) {
     <>
       <div className="split">
         <div className="card">
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="legacyRowBlock">
             <div>
               <div style={{ fontWeight: 700 }}>Paste VLESS</div>
               <div className="muted">Updates outbounds[tag=vpn] in /etc/sing-box/config.json</div>
@@ -107,12 +107,9 @@ export default function VlessTab({ setStatus }) {
               Apply & restart
             </button>
           </div>
-          <div style={{ marginTop: 10 }}>
-            <textarea className="textarea" value={vless} onChange={(e) => setVless(e.target.value)} placeholder="vless://UUID@host:443?..." />
-          </div>
-          <div className="row" style={{ marginTop: 10, gap: 8 }}>
+          <div className="legacyRowBlock">
             <input
-              className="input"
+              className="input legacyRowBlockInputs"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="template name (optional)"
@@ -140,8 +137,7 @@ export default function VlessTab({ setStatus }) {
             {templates.map((tpl) => (
               <div
                 key={tpl.id}
-                className="row"
-                style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}
+                className="legacyRowBlock"
               >
                 <div>
                   <div style={{ fontWeight: 700 }}>{tpl.name}</div>
@@ -149,7 +145,7 @@ export default function VlessTab({ setStatus }) {
                     {tpl.id}
                   </div>
                 </div>
-                <div className="row" style={{ gap: 6 }}>
+                <div className="legacyRowBlockActions">
                   <button className="btn" onClick={() => loadTemplate(tpl.id)}>
                     Load into textarea
                   </button>
