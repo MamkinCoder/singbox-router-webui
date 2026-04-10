@@ -42,6 +42,7 @@ export default function ClientsTab({ setStatus }) {
         mac,
         ip: lease?.ip || record.ip || 'unknown',
         name,
+        bypass_vpn: !!record.bypass_vpn,
         force_vpn: !!record.force_vpn,
         force_udp_vpn: !!record.force_udp_vpn,
       }
@@ -51,6 +52,7 @@ export default function ClientsTab({ setStatus }) {
   const persistClient = async (client, overrides = {}, busyMsg, successMsg) => {
     const payload = {
       name: overrides.name ?? client.name,
+      bypass_vpn: overrides.bypass_vpn ?? client.bypass_vpn,
       force_vpn: overrides.force_vpn ?? client.force_vpn,
       force_udp_vpn: overrides.force_udp_vpn ?? client.force_udp_vpn,
       ip: client.ip,
@@ -83,6 +85,17 @@ export default function ClientsTab({ setStatus }) {
       { force_vpn: enable },
       `${enable ? 'Forcing' : 'Releasing'} ${client.name}…`,
       `${client.name} ${enable ? 'will' : 'will no longer'} force VPN`,
+    )
+
+  const updateBypass = (client, enable) =>
+    persistClient(
+      client,
+      {
+        bypass_vpn: enable,
+        ...(enable ? { force_vpn: false, force_udp_vpn: false } : {}),
+      },
+      `${enable ? 'Bypassing' : 'Re-enabling VPN rules for'} ${client.name}…`,
+      `${client.name} ${enable ? 'will now bypass sing-box entirely' : 'will use the normal VPN routing rules again'}`,
     )
 
   const updateUdp = (client, enable) =>
@@ -126,6 +139,7 @@ export default function ClientsTab({ setStatus }) {
         <div className="clientsList">
           <div className="clientsTableHeader">
             <span>Client</span>
+            <span>Bypass VPN</span>
             <span>Force VPN</span>
             <span>UDP</span>
           </div>
@@ -187,9 +201,21 @@ export default function ClientsTab({ setStatus }) {
                     </>
                   )}
                 </div>
+                <div className="clientsListCell clientsListCellRouting">
+                  <label className="checkbox legacyCheckboxLabel">
+                    <input
+                      type="checkbox"
+                      checked={client.bypass_vpn}
+                      onChange={() => updateBypass(client, !client.bypass_vpn)}
+                    />
+                    {' '}
+                    Bypass sing-box
+                  </label>
+                </div>
                 <div className="clientsListCell clientsListCellActions">
                   <button
                     className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
+                    disabled={client.bypass_vpn}
                     onClick={() => updateVpn(client, !client.force_vpn)}
                   >
                     {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
@@ -200,6 +226,7 @@ export default function ClientsTab({ setStatus }) {
                     <input
                       type="checkbox"
                       checked={client.force_udp_vpn}
+                      disabled={client.bypass_vpn}
                       onChange={() => updateUdp(client, !client.force_udp_vpn)}
                     />
                     {' '}

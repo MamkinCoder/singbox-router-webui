@@ -41,7 +41,11 @@ To run locally for testing you can start the backend with `node server.js` and t
 
 ## Router lease scraping
 
-`/sb/api/clients/leases` now reads the kernel neighbor table via `ip neigh` (see `server/helpers/pihole.js`). Keeping the ARP cache populated is sufficient for discovering devices. When you toggle “Force VPN,” the backend rewrites `/etc/sing-box/config.json` by injecting a `source_ip_cidr` rule before your `rule_set`, restarts sing-box, and the forced IPs are evaluated ahead of the domain list. Entries look like:
+`/sb/api/clients/leases` now reads the kernel neighbor table via `ip neigh` (see `server/helpers/pihole.js`). Keeping the ARP cache populated is sufficient for discovering devices.
+
+When you toggle “Bypass sing-box” for a client, the backend rewrites `/etc/nftables.conf` and adds that source IP to a dedicated `bypass_vpn_clients` set. The nftables `prerouting` chain returns early for those addresses before any TPROXY rule, so the Pi still routes/NATs their traffic to the router, but sing-box never sees it.
+
+When you toggle “Force VPN,” the backend rewrites `/etc/sing-box/config.json` by injecting a `source_ip_cidr` rule before your `rule_set`, restarts sing-box, and the forced IPs are evaluated ahead of the domain list. Entries look like:
 
 ```json
 {

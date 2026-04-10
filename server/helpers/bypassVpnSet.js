@@ -3,25 +3,25 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { CLIENTS_POLICY_PATH, NFTABLES_CONF_PATH } = require('../config');
+const { NFTABLES_CONF_PATH } = require('../config');
 
-const BEGIN = '# === SB-WEBUI:BEGIN force_udp_vpn_clients ===';
-const END = '# === SB-WEBUI:END force_udp_vpn_clients ===';
+const BEGIN = '# === SB-WEBUI:BEGIN bypass_vpn_clients ===';
+const END = '# === SB-WEBUI:END bypass_vpn_clients ===';
+
 function buildIps(policy) {
-  const clients = policy.clients || {};
+  const clients = policy?.clients || {};
   const ips = [];
   for (const entry of Object.values(clients)) {
-    if (entry?.force_udp_vpn && !entry?.bypass_vpn && entry?.ip) {
-      const ip = String(entry.ip).trim();
-      if (ip) ips.push(ip.includes('/') ? ip : `${ip}/32`);
-    }
+    if (!entry?.bypass_vpn || !entry?.ip) continue;
+    const ip = String(entry.ip).trim();
+    if (ip) ips.push(ip.includes('/') ? ip : `${ip}/32`);
   }
-  return ips.sort();
+  return Array.from(new Set(ips)).sort();
 }
 
 function buildConfigBody(ips) {
   return `
-  set force_udp_vpn_clients {
+  set bypass_vpn_clients {
     type ipv4_addr
     flags interval
 ${ips.length ? `    elements = { ${ips.join(', ')} }` : '    # SB-WEBUI-ELEMENTS'}
@@ -49,26 +49,25 @@ function rewriteConfig(ips) {
   const beginIdx = nft.indexOf(BEGIN);
   const endIdx = nft.indexOf(END);
   if (beginIdx === -1 || endIdx === -1) {
-    throw new Error('nftables markers not found');
+    throw new Error('nftables bypass markers not found');
   }
   const beginLineEnd = nft.indexOf('\n', beginIdx);
   if (beginLineEnd === -1) {
-    throw new Error('nftables BEGIN marker missing newline');
+    throw new Error('nftables bypass BEGIN marker missing newline');
   }
   const before = nft.slice(0, beginLineEnd + 1);
   const after = nft.slice(endIdx);
-  const body = buildConfigBody(ips);
-  saveConfig(NFTABLES_CONF_PATH, `${before}${body}${after}`);
+  saveConfig(NFTABLES_CONF_PATH, `${before}${buildConfigBody(ips)}${after}`);
 }
 
 function reloadNft() {
   execFileSync('sudo', ['nft', '-f', NFTABLES_CONF_PATH], { stdio: 'inherit' });
 }
 
-async function updateForceUdpSet(policy) {
+async function updateBypassVpnSet(policy) {
   const ips = buildIps(policy);
   rewriteConfig(ips);
   reloadNft();
 }
 
-module.exports = { updateForceUdpSet };
+module.exports = { updateBypassVpnSet };

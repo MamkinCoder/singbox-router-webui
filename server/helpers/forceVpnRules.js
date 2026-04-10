@@ -7,7 +7,7 @@ function collectForceVpnIps(policy) {
   const clients = policy?.clients || {};
   const ips = new Set();
   for (const entry of Object.values(clients)) {
-    if (!entry?.force_vpn || !entry?.ip) continue;
+    if (!entry?.force_vpn || entry?.bypass_vpn || !entry?.ip) continue;
     const ip = String(entry.ip || '').trim();
     if (!ip) continue;
     ips.add(ip.includes('/') ? ip : `${ip}/32`);
