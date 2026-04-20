@@ -3,6 +3,7 @@
 const { CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY } = require('../config');
 const { readJsonSafe, writeJsonWithSudoInstall } = require('../helpers/fs');
 const { readDhcpLeases } = require('../helpers/leases');
+const { applyBypassVpnRules } = require('../helpers/bypassVpnRules');
 const { applyForceVpnRules } = require('../helpers/forceVpnRules');
 const { updateForceUdpSet } = require('../helpers/forceUdpSet');
 const { updateBypassVpnSet } = require('../helpers/bypassVpnSet');
@@ -46,6 +47,7 @@ function registerClientsRoutes(app) {
 
       await writeJsonWithSudoInstall(CLIENTS_POLICY_PATH, pol);
       await updateBypassVpnSet(pol);
+      await applyBypassVpnRules(pol);
       await applyForceVpnRules(pol);
       await updateForceUdpSet(pol);
       await restartSingBox();

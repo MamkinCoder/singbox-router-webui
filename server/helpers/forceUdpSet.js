@@ -9,14 +9,14 @@ const BEGIN = '# === SB-WEBUI:BEGIN force_udp_vpn_clients ===';
 const END = '# === SB-WEBUI:END force_udp_vpn_clients ===';
 function buildIps(policy) {
   const clients = policy.clients || {};
-  const ips = [];
+  const ips = new Set();
   for (const entry of Object.values(clients)) {
     if (entry?.force_udp_vpn && !entry?.bypass_vpn && entry?.ip) {
       const ip = String(entry.ip).trim();
-      if (ip) ips.push(ip.includes('/') ? ip : `${ip}/32`);
+      if (ip) ips.add(ip.includes('/') ? ip : `${ip}/32`);
     }
   }
-  return ips.sort();
+  return Array.from(ips).sort();
 }
 
 function buildConfigBody(ips) {
