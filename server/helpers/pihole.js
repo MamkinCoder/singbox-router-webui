@@ -53,20 +53,48 @@ function parseIpNeigh(output) {
   return rows;
 }
 
+function stateRank(state) {
+  switch (String(state || '').toUpperCase()) {
+    case 'REACHABLE':
+      return 5;
+    case 'DELAY':
+      return 4;
+    case 'PROBE':
+      return 3;
+    case 'PERMANENT':
+      return 2;
+    case 'STALE':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function isActiveState(state) {
+  return stateRank(state) >= 2;
+}
+
 async function readLanClientsFromNeigh({ iface = 'eth0' } = {}) {
   // "-4" makes it IPv4 only; drop if you want both families.
   const out = await execFileP('ip', ['-4', 'neigh', 'show', 'dev', iface]);
   const entries = parseIpNeigh(out);
 
-  // You can optionally de-dup by MAC (some devices can appear multiple times)
+  // Prefer an active neighbor entry if multiple rows exist for the same MAC.
   const byMac = new Map();
-  for (const e of entries) byMac.set(e.mac, e);
+  for (const e of entries) {
+    const current = byMac.get(e.mac);
+    if (!current || stateRank(e.state) >= stateRank(current.state)) {
+      byMac.set(e.mac, e);
+    }
+  }
 
   return [...byMac.values()].map((e) => ({
     mac: e.mac,
     ip: e.ip,
     hostname: 'unknown',      // neigh table doesn’t know hostnames
     lease: `neigh:${e.state}`, // e.g. neigh:REACHABLE / neigh:STALE
+    state: e.state,
+    active: isActiveState(e.state),
   }));
 }
 

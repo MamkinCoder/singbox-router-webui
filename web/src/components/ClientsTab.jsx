@@ -38,9 +38,15 @@ export default function ClientsTab({ setStatus }) {
       const lease = leaseMap.get(mac)
       const record = recorded[mac] || {}
       const name = record.name || lease?.hostname || lease?.clientId || lease?.ip || mac
+      const currentIp = lease?.active ? lease.ip : ''
+      const lastKnownIp = record.ip || lease?.ip || ''
       return {
         mac,
-        ip: lease?.ip || record.ip || 'unknown',
+        ip: currentIp || lastKnownIp || 'unknown',
+        currentIp,
+        lastKnownIp,
+        leaseState: lease?.state || '',
+        leaseActive: !!lease?.active,
         name,
         bypass_vpn: !!record.bypass_vpn,
         force_vpn: !!record.force_vpn,
@@ -50,12 +56,25 @@ export default function ClientsTab({ setStatus }) {
   }, [leases, policy])
 
   const persistClient = async (client, overrides = {}, busyMsg, successMsg) => {
+    const nextBypass = overrides.bypass_vpn ?? client.bypass_vpn
+    const nextForceVpn = overrides.force_vpn ?? client.force_vpn
+    const nextForceUdpVpn = overrides.force_udp_vpn ?? client.force_udp_vpn
+    const needsLiveIp = nextBypass || nextForceVpn || nextForceUdpVpn
+
+    if (needsLiveIp && !client.currentIp) {
+      setStatus({
+        msg: `${client.name} does not have a current LAN IP. Refresh clients and try again when it is online.`,
+        ok: false,
+      })
+      throw new Error('No current LAN IP for client')
+    }
+
     const payload = {
       name: overrides.name ?? client.name,
-      bypass_vpn: overrides.bypass_vpn ?? client.bypass_vpn,
-      force_vpn: overrides.force_vpn ?? client.force_vpn,
-      force_udp_vpn: overrides.force_udp_vpn ?? client.force_udp_vpn,
-      ip: client.ip,
+      bypass_vpn: nextBypass,
+      force_vpn: nextForceVpn,
+      force_udp_vpn: nextForceUdpVpn,
+      ...(needsLiveIp ? { ip: client.currentIp } : {}),
     }
 
     try {
@@ -196,7 +215,7 @@ export default function ClientsTab({ setStatus }) {
                         </button>
                       </div>
                       <div className="legacyClientMeta">
-                        {client.ip} • {client.mac}
+                        {client.currentIp || `last known ${client.lastKnownIp || 'unknown'}`} • {client.mac}{client.leaseState ? ` • ${client.leaseState.toLowerCase()}` : ''}
                       </div>
                     </>
                   )}
@@ -206,6 +225,7 @@ export default function ClientsTab({ setStatus }) {
                     <input
                       type="checkbox"
                       checked={client.bypass_vpn}
+                      disabled={!client.currentIp}
                       onChange={() => updateBypass(client, !client.bypass_vpn)}
                     />
                     {' '}
@@ -215,7 +235,7 @@ export default function ClientsTab({ setStatus }) {
                 <div className="clientsListCell clientsListCellActions">
                   <button
                     className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
-                    disabled={client.bypass_vpn}
+                    disabled={client.bypass_vpn || !client.currentIp}
                     onClick={() => updateVpn(client, !client.force_vpn)}
                   >
                     {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
@@ -226,7 +246,7 @@ export default function ClientsTab({ setStatus }) {
                     <input
                       type="checkbox"
                       checked={client.force_udp_vpn}
-                      disabled={client.bypass_vpn}
+                      disabled={client.bypass_vpn || !client.currentIp}
                       onChange={() => updateUdp(client, !client.force_udp_vpn)}
                     />
                     {' '}
