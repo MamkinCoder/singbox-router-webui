@@ -12,6 +12,7 @@ const {
   normalizeMac,
   isValidMac,
   findLease,
+  findLeaseIpConflict,
   hasRoutingPolicy,
   buildEffectivePolicy,
 } = require('../helpers/clientPolicy');
@@ -72,15 +73,23 @@ function registerClientsRoutes(app) {
             details: ['Refresh clients and enable routing only while this MAC exists in the LAN neighbor cache.'],
           });
         }
+        const conflict = findLeaseIpConflict(leases, id, lease.ip);
+        if (conflict) {
+          return res.status(409).json({
+            error: 'Client IP conflicts with another MAC',
+            details: [`${lease.ip} is also present for ${conflict.mac}. Refresh clients before changing routing.`],
+          });
+        }
         nextClient.ip = lease.ip;
       } else if (lease) {
         nextClient.ip = lease.ip;
       }
       pol.clients[id] = nextClient;
+      const savedPolicy = buildEffectivePolicy(pol, leases);
 
-      await writeJsonWithSudoInstall(CLIENTS_POLICY_PATH, pol);
-      await applyClientRouting(pol, leases);
-      res.json({ ok: true, client: pol.clients[id] });
+      await writeJsonWithSudoInstall(CLIENTS_POLICY_PATH, savedPolicy);
+      await applyClientRouting(savedPolicy, leases);
+      res.json({ ok: true, client: savedPolicy.clients[id] });
     } catch (error) {
       console.error('Failed to update client:', error);
       res.status(500).json({ error: 'Client update failed', details: [String(error?.message || error)] });

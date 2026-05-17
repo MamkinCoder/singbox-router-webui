@@ -26,6 +26,15 @@ function findLeaseByIp(leases, ip) {
   return (leases || []).find((lease) => String(lease?.ip || '').trim() === target) || null;
 }
 
+function findLeaseIpConflict(leases, mac, ip) {
+  const owner = normalizeMac(mac);
+  const target = String(ip || '').trim();
+  if (!target) return null;
+  return (leases || []).find(
+    (lease) => String(lease?.ip || '').trim() === target && normalizeMac(lease?.mac) !== owner
+  ) || null;
+}
+
 function findActiveLeaseByIp(leases, ip) {
   const target = String(ip || '').trim();
   if (!target) return null;
@@ -54,12 +63,14 @@ function buildEffectivePolicy(policy, leases) {
 
     if (hasRoutingPolicy(client)) {
       const lease = findLease(leases, mac);
-      const storedIp = String(client.ip || '').trim();
-      const conflict = storedIp ? findLeaseByIp(leases, storedIp) : null;
+      const conflict = lease ? findLeaseIpConflict(leases, mac, lease.ip) : null;
 
-      if (lease) {
+      if (lease && !conflict) {
         client.ip = lease.ip;
-      } else if (conflict && normalizeMac(conflict.mac) !== mac) {
+      } else {
+        client.bypass_vpn = false;
+        client.force_vpn = false;
+        client.force_udp_vpn = false;
         delete client.ip;
       }
     }
@@ -76,6 +87,7 @@ module.exports = {
   findLease,
   findActiveLease,
   findLeaseByIp,
+  findLeaseIpConflict,
   findActiveLeaseByIp,
   hasRoutingPolicy,
   buildEffectivePolicy,
