@@ -10,9 +10,20 @@ function isValidMac(mac) {
   return MAC_RE.test(normalizeMac(mac));
 }
 
+function findLease(leases, mac) {
+  const target = normalizeMac(mac);
+  return (leases || []).find((lease) => normalizeMac(lease?.mac) === target && lease?.ip) || null;
+}
+
 function findActiveLease(leases, mac) {
   const target = normalizeMac(mac);
   return (leases || []).find((lease) => normalizeMac(lease?.mac) === target && lease?.active && lease?.ip) || null;
+}
+
+function findLeaseByIp(leases, ip) {
+  const target = String(ip || '').trim();
+  if (!target) return null;
+  return (leases || []).find((lease) => String(lease?.ip || '').trim() === target) || null;
 }
 
 function findActiveLeaseByIp(leases, ip) {
@@ -42,9 +53,9 @@ function buildEffectivePolicy(policy, leases) {
     }
 
     if (hasRoutingPolicy(client)) {
-      const lease = findActiveLease(leases, mac);
+      const lease = findLease(leases, mac);
       const storedIp = String(client.ip || '').trim();
-      const conflict = storedIp ? findActiveLeaseByIp(leases, storedIp) : null;
+      const conflict = storedIp ? findLeaseByIp(leases, storedIp) : null;
 
       if (lease) {
         client.ip = lease.ip;
@@ -62,7 +73,9 @@ function buildEffectivePolicy(policy, leases) {
 module.exports = {
   normalizeMac,
   isValidMac,
+  findLease,
   findActiveLease,
+  findLeaseByIp,
   findActiveLeaseByIp,
   hasRoutingPolicy,
   buildEffectivePolicy,

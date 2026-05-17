@@ -11,7 +11,7 @@ const { restartSingBox } = require('../helpers/singbox');
 const {
   normalizeMac,
   isValidMac,
-  findActiveLease,
+  findLease,
   hasRoutingPolicy,
   buildEffectivePolicy,
 } = require('../helpers/clientPolicy');
@@ -51,7 +51,7 @@ function registerClientsRoutes(app) {
       }
 
       const leases = await readDhcpLeases();
-      const activeLease = findActiveLease(leases, id);
+      const lease = findLease(leases, id);
       const pol = await readJsonSafe(CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY);
       pol.clients = pol.clients || {};
       const nextClient = {
@@ -65,16 +65,16 @@ function registerClientsRoutes(app) {
         nextClient.force_vpn = false;
         nextClient.force_udp_vpn = false;
       }
-      if (hasRoutingPolicy(nextClient) && (routingChanged || activeLease)) {
-        if (!activeLease) {
+      if (hasRoutingPolicy(nextClient) && (routingChanged || lease)) {
+        if (!lease) {
           return res.status(409).json({
-            error: 'Client has no active LAN IP',
-            details: ['Refresh clients and enable routing only while this MAC is active on LAN.'],
+            error: 'Client is not in the LAN neighbor cache',
+            details: ['Refresh clients and enable routing only while this MAC exists in the LAN neighbor cache.'],
           });
         }
-        nextClient.ip = activeLease.ip;
-      } else if (activeLease) {
-        nextClient.ip = activeLease.ip;
+        nextClient.ip = lease.ip;
+      } else if (lease) {
+        nextClient.ip = lease.ip;
       }
       pol.clients[id] = nextClient;
 

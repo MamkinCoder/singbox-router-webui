@@ -38,7 +38,7 @@ export default function ClientsTab({ setStatus }) {
       const lease = leaseMap.get(mac)
       const record = recorded[mac] || {}
       const name = record.name || lease?.hostname || lease?.clientId || lease?.ip || mac
-      const currentIp = lease?.active ? lease.ip : ''
+      const currentIp = lease?.ip || ''
       const lastKnownIp = record.ip || lease?.ip || ''
       return {
         mac,
@@ -67,10 +67,10 @@ export default function ClientsTab({ setStatus }) {
 
     if (routingChanged && needsLiveIp && !client.currentIp) {
       setStatus({
-        msg: `${client.name} does not have a current LAN IP. Refresh clients and try again when it is online.`,
+        msg: `${client.name} is not in the LAN neighbor cache. Refresh clients and try again when it is online.`,
         ok: false,
       })
-      throw new Error('No current LAN IP for client')
+      throw new Error('No LAN neighbor entry for client')
     }
 
     const payload = {
