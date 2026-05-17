@@ -104,7 +104,10 @@ export default function ClientsTab({ setStatus }) {
   const updateVpn = (client, enable) =>
     persistClient(
       client,
-      { force_vpn: enable },
+      {
+        force_vpn: enable,
+        ...(enable ? { bypass_vpn: false } : {}),
+      },
       `${enable ? 'Forcing' : 'Releasing'} ${client.name}…`,
       `${client.name} ${enable ? 'will' : 'will no longer'} force VPN`,
     )
@@ -123,7 +126,10 @@ export default function ClientsTab({ setStatus }) {
   const updateUdp = (client, enable) =>
     persistClient(
       client,
-      { force_udp_vpn: enable },
+      {
+        force_udp_vpn: enable,
+        ...(enable ? { bypass_vpn: false } : {}),
+      },
       `${enable ? 'Enabling' : 'Disabling'} non-gaming mode for ${client.name}…`,
       `Non-gaming mode ${enable ? 'enabled' : 'disabled'} for ${client.name}`,
     )
@@ -238,7 +244,7 @@ export default function ClientsTab({ setStatus }) {
                 <div className="clientsListCell clientsListCellActions">
                   <button
                     className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
-                    disabled={client.bypass_vpn || (!client.currentIp && !client.force_vpn)}
+                    disabled={!client.currentIp && !client.force_vpn}
                     onClick={() => updateVpn(client, !client.force_vpn)}
                   >
                     {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
@@ -249,7 +255,7 @@ export default function ClientsTab({ setStatus }) {
                     <input
                       type="checkbox"
                       checked={client.force_udp_vpn}
-                      disabled={client.bypass_vpn || (!client.currentIp && !client.force_udp_vpn)}
+                      disabled={!client.currentIp && !client.force_udp_vpn}
                       onChange={() => updateUdp(client, !client.force_udp_vpn)}
                     />
                     {' '}

@@ -65,6 +65,8 @@ function registerClientsRoutes(app) {
       if (nextClient.bypass_vpn) {
         nextClient.force_vpn = false;
         nextClient.force_udp_vpn = false;
+      } else if (nextClient.force_vpn || nextClient.force_udp_vpn) {
+        nextClient.bypass_vpn = false;
       }
       if (hasRoutingPolicy(nextClient) && (routingChanged || lease)) {
         if (!lease) {
