@@ -59,9 +59,13 @@ export default function ClientsTab({ setStatus }) {
     const nextBypass = overrides.bypass_vpn ?? client.bypass_vpn
     const nextForceVpn = overrides.force_vpn ?? client.force_vpn
     const nextForceUdpVpn = overrides.force_udp_vpn ?? client.force_udp_vpn
+    const routingChanged =
+      overrides.bypass_vpn !== undefined ||
+      overrides.force_vpn !== undefined ||
+      overrides.force_udp_vpn !== undefined
     const needsLiveIp = nextBypass || nextForceVpn || nextForceUdpVpn
 
-    if (needsLiveIp && !client.currentIp) {
+    if (routingChanged && needsLiveIp && !client.currentIp) {
       setStatus({
         msg: `${client.name} does not have a current LAN IP. Refresh clients and try again when it is online.`,
         ok: false,
@@ -70,23 +74,22 @@ export default function ClientsTab({ setStatus }) {
     }
 
     const payload = {
-      name: overrides.name ?? client.name,
-      bypass_vpn: nextBypass,
-      force_vpn: nextForceVpn,
-      force_udp_vpn: nextForceUdpVpn,
-      ...(needsLiveIp ? { ip: client.currentIp } : {}),
+      ...(overrides.name !== undefined ? { name: overrides.name } : {}),
+      ...(overrides.bypass_vpn !== undefined ? { bypass_vpn: overrides.bypass_vpn } : {}),
+      ...(overrides.force_vpn !== undefined ? { force_vpn: overrides.force_vpn } : {}),
+      ...(overrides.force_udp_vpn !== undefined ? { force_udp_vpn: overrides.force_udp_vpn } : {}),
     }
 
     try {
       setStatus({ msg: busyMsg, ok: null })
-      await api.put(`/sb/api/clients/${encodeURIComponent(client.mac)}`, payload)
+      const result = await api.put(`/sb/api/clients/${encodeURIComponent(client.mac)}`, payload)
       setPolicy((prev) => ({
         ...prev,
         clients: {
           ...prev.clients,
           [client.mac]: {
             ...(prev.clients?.[client.mac] || {}),
-            ...payload,
+            ...(result?.client || payload),
           },
         },
       }))
@@ -151,7 +154,7 @@ export default function ClientsTab({ setStatus }) {
 
   return (
     <div className="card">
-      <div style={{ fontWeight: 700 }}>Clients (DHCP leases)</div>
+      <div style={{ fontWeight: 700 }}>Clients (LAN neighbor cache)</div>
       {loading ? (
         <div className="muted" style={{ marginTop: 6 }}>Loading clients…</div>
       ) : clients.length ? (
@@ -225,7 +228,7 @@ export default function ClientsTab({ setStatus }) {
                     <input
                       type="checkbox"
                       checked={client.bypass_vpn}
-                      disabled={!client.currentIp}
+                      disabled={!client.currentIp && !client.bypass_vpn}
                       onChange={() => updateBypass(client, !client.bypass_vpn)}
                     />
                     {' '}
@@ -235,7 +238,7 @@ export default function ClientsTab({ setStatus }) {
                 <div className="clientsListCell clientsListCellActions">
                   <button
                     className={`btn ${client.force_vpn ? 'danger' : 'primary'}`}
-                    disabled={client.bypass_vpn || !client.currentIp}
+                    disabled={client.bypass_vpn || (!client.currentIp && !client.force_vpn)}
                     onClick={() => updateVpn(client, !client.force_vpn)}
                   >
                     {client.force_vpn ? 'Disable force VPN' : 'Force VPN for all traffic'}
@@ -246,7 +249,7 @@ export default function ClientsTab({ setStatus }) {
                     <input
                       type="checkbox"
                       checked={client.force_udp_vpn}
-                      disabled={client.bypass_vpn || !client.currentIp}
+                      disabled={client.bypass_vpn || (!client.currentIp && !client.force_udp_vpn)}
                       onChange={() => updateUdp(client, !client.force_udp_vpn)}
                     />
                     {' '}
@@ -258,7 +261,7 @@ export default function ClientsTab({ setStatus }) {
           })}
         </div>
       ) : (
-        <div className="muted" style={{ marginTop: 6 }}>No DHCP leases found.</div>
+        <div className="muted" style={{ marginTop: 6 }}>No LAN clients found.</div>
       )}
     </div>
   )
