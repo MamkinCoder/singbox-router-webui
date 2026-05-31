@@ -2,6 +2,7 @@
 
 const { readJsonDetailed, writeJsonWithSudoInstall } = require('./fs');
 const { SINGBOX_CONFIG_PATH } = require('../config');
+const { ensureRoute, normalizeSingBoxRoute } = require('./singboxConfig');
 
 function collectBypassIps(policy) {
   const clients = policy?.clients || {};
@@ -13,11 +14,6 @@ function collectBypassIps(policy) {
     ips.add(ip.includes('/') ? ip : `${ip}/32`);
   }
   return Array.from(ips).sort();
-}
-
-function ensureRoute(cfg) {
-  if (!cfg.route) cfg.route = {};
-  if (!Array.isArray(cfg.route.rules)) cfg.route.rules = [];
 }
 
 function isBypassRule(rule) {
@@ -54,7 +50,9 @@ async function applyBypassVpnRules(policy) {
   const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
   if (!cfg) throw new Error(`Cannot read ${SINGBOX_CONFIG_PATH}: ${error?.message || error}`);
 
+  normalizeSingBoxRoute(cfg);
   ensureRoute(cfg);
+  if (!Array.isArray(cfg.route.rules)) cfg.route.rules = [];
   removeExistingRule(cfg);
 
   if (ips.length) {

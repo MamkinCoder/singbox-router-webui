@@ -13,6 +13,7 @@ const {
   deleteTemplate,
 } = require('../templates');
 const { restartSingBox } = require('../helpers/singbox');
+const { normalizeSingBoxRoute } = require('../helpers/singboxConfig');
 
 function respondConfigError(res, err) {
   return res.status(500).json({
@@ -76,6 +77,7 @@ function registerVlessRoutes(app) {
     if (idx === -1) return res.status(404).json({ error: 'No outbound with tag "vpn" found' });
 
     cfg.outbounds[idx] = deepMergeKeep(cfg.outbounds[idx], patch);
+    normalizeSingBoxRoute(cfg);
 
     await writeJsonWithSudoInstall(SINGBOX_CONFIG_PATH, cfg);
     await restartSingBox();

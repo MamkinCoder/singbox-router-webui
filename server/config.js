@@ -72,6 +72,7 @@ const DEFAULT_UI_DOMAINS = {
 
 const FORCE_VPN_IPS_PATH = process.env.FORCE_VPN_IPS_PATH || '/etc/sing-box/rules/force_vpn_ips.json';
 const NFTABLES_CONF_PATH = process.env.NFTABLES_CONF_PATH || '/etc/nftables.conf';
+const SINGBOX_DEFAULT_INTERFACE = process.env.SINGBOX_DEFAULT_INTERFACE || 'eth0';
 const DEFAULT_CLIENTS_POLICY = { version: 1, clients: {} };
 
 module.exports = {
@@ -86,4 +87,5 @@ module.exports = {
   DEFAULT_CLIENTS_POLICY,
   FORCE_VPN_IPS_PATH,
   NFTABLES_CONF_PATH,
+  SINGBOX_DEFAULT_INTERFACE,
 };
