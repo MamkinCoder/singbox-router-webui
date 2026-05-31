@@ -91,7 +91,7 @@ function parseVlessLink(vless) {
   if (security === 'reality') {
     if (!sni) errors.push('Missing sni for reality');
     if (!pbk || !isBase64Urlish(pbk)) errors.push('Missing/invalid pbk (reality public key)');
-    if (!sid || !isShortId(sid)) errors.push('Missing/invalid sid (reality short id)');
+    if (sid && !isShortId(sid)) errors.push('Invalid sid (reality short id)');
   }
 
   if (errors.length) {
@@ -113,7 +113,8 @@ function parseVlessLink(vless) {
     if (fp) patch.tls.utls = { enabled: true, fingerprint: fp };
 
     if (security === 'reality') {
-      patch.tls.reality = { enabled: true, public_key: pbk, short_id: sid };
+      patch.tls.reality = { enabled: true, public_key: pbk };
+      if (sid) patch.tls.reality.short_id = sid;
     }
   }
 
