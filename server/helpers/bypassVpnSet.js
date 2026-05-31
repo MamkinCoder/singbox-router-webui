@@ -3,14 +3,15 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { NFTABLES_CONF_PATH } = require('../config');
+const { NFTABLES_CONF_PATH, LAN_BYPASS_CIDR } = require('../config');
 
 const BEGIN = '# === SB-WEBUI:BEGIN bypass_vpn_clients ===';
 const END = '# === SB-WEBUI:END bypass_vpn_clients ===';
 
-function buildIps(policy) {
+function buildIps(policy, options = {}) {
+  const { vpnEnabled = true } = options;
   const clients = policy?.clients || {};
-  const ips = [];
+  const ips = vpnEnabled ? [] : [LAN_BYPASS_CIDR];
   for (const entry of Object.values(clients)) {
     if (!entry?.bypass_vpn || !entry?.ip) continue;
     const ip = String(entry.ip).trim();
@@ -64,8 +65,8 @@ function reloadNft() {
   execFileSync('sudo', ['nft', '-f', NFTABLES_CONF_PATH], { stdio: 'inherit' });
 }
 
-async function updateBypassVpnSet(policy) {
-  const ips = buildIps(policy);
+async function updateBypassVpnSet(policy, options) {
+  const ips = buildIps(policy, options);
   rewriteConfig(ips);
   reloadNft();
 }

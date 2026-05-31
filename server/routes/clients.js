@@ -1,13 +1,14 @@
 'use strict';
 
-const { CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY } = require('../config');
-const { readJsonSafe, writeJsonWithSudoInstall } = require('../helpers/fs');
+const { CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY, SINGBOX_CONFIG_PATH } = require('../config');
+const { readJsonSafe, readJsonDetailed, writeJsonWithSudoInstall } = require('../helpers/fs');
 const { readDhcpLeases } = require('../helpers/leases');
 const { applyBypassVpnRules } = require('../helpers/bypassVpnRules');
 const { applyForceVpnRules } = require('../helpers/forceVpnRules');
 const { updateForceUdpSet } = require('../helpers/forceUdpSet');
 const { updateBypassVpnSet } = require('../helpers/bypassVpnSet');
 const { restartSingBox } = require('../helpers/singbox');
+const { getVpnStateFromConfig } = require('../helpers/vpnState');
 const {
   normalizeMac,
   isValidMac,
@@ -19,7 +20,9 @@ const {
 
 async function applyClientRouting(policy, leases) {
   const effectivePolicy = buildEffectivePolicy(policy, leases);
-  await updateBypassVpnSet(effectivePolicy);
+  const { data: cfg } = await readJsonDetailed(SINGBOX_CONFIG_PATH, {});
+  const { enabled } = getVpnStateFromConfig(cfg || {});
+  await updateBypassVpnSet(effectivePolicy, { vpnEnabled: enabled });
   await applyBypassVpnRules(effectivePolicy);
   await applyForceVpnRules(effectivePolicy);
   await updateForceUdpSet(effectivePolicy);

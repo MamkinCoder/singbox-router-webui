@@ -2,11 +2,12 @@
 
 const { readJsonSafe, readJsonDetailed, writeJsonWithSudoInstall } = require('../helpers/fs');
 const { restartSingBox, singBoxStatus } = require('../helpers/singbox');
+const { updateBypassVpnSet } = require('../helpers/bypassVpnSet');
 const {
   setVpnStateInConfig,
   getVpnStateFromConfig,
 } = require('../helpers/vpnState');
-const { SINGBOX_CONFIG_PATH } = require('../config');
+const { SINGBOX_CONFIG_PATH, CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY } = require('../config');
 
 function respondConfigError(res, err) {
   return res.status(500).json({
@@ -34,6 +35,8 @@ function registerVpnRoutes(app) {
 
     setVpnStateInConfig(cfg, enabled, policy);
     await writeJsonWithSudoInstall(SINGBOX_CONFIG_PATH, cfg);
+    const clientsPolicy = await readJsonSafe(CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY);
+    await updateBypassVpnSet(clientsPolicy, { vpnEnabled: enabled });
     await restartSingBox();
 
     const { active, status } = await singBoxStatus();
