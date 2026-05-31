@@ -46,6 +46,7 @@ To run locally for testing you can start the backend with `node server.js` and t
 When you toggle “Bypass sing-box” for a client, the backend now enforces that in two places:
 
 - it rewrites `/etc/nftables.conf` and adds the source IP to `bypass_vpn_clients`, where `prerouting` clears the mark and returns before any TPROXY rule;
+- transparent HTTP/HTTPS interception now skips any IPv4 address owned by the Pi via `fib daddr type local`, so LAN access to the WebUI keeps reaching nginx even if the Pi has multiple addresses;
 - it also rewrites `/etc/sing-box/config.json` with a `source_ip_cidr -> direct` rule before any force-VPN or domain-based VPN rules.
 
 That gives bypassed clients plain routing/NAT through the Pi even if a packet still reaches the transparent proxy path.
