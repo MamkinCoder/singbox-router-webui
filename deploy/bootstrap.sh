@@ -13,6 +13,9 @@ LAN_CIDR="${LAN_CIDR:-192.168.0.0/24}"
 SB_WEBUI_DIR="${SB_WEBUI_DIR:-/opt/sb-webui}"
 SB_WEBUI_USER="${SB_WEBUI_USER:-rpi}"
 SINGBOX_DEFAULT_INTERFACE="${SINGBOX_DEFAULT_INTERFACE:-eth0}"
+TPROXY_TABLE_NAME="${TPROXY_TABLE_NAME:-tproxy}"
+TPROXY_TABLE_ID="${TPROXY_TABLE_ID:-100}"
+TPROXY_RULE_PREF="${TPROXY_RULE_PREF:-100}"
 
 require_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -150,6 +153,19 @@ deploy_repo_files() {
   systemctl daemon-reload
 }
 
+install_tproxy_policy_routing() {
+  install -d /etc/iproute2/rt_tables.d
+  cat > /etc/iproute2/rt_tables.d/sb-webui.conf <<EOF
+${TPROXY_TABLE_ID} ${TPROXY_TABLE_NAME}
+EOF
+
+  install -d /etc/NetworkManager/dispatcher.d
+  install -m 0755 "$DEPLOY_DIR/templates/nm-dispatcher-tproxy.sh" /etc/NetworkManager/dispatcher.d/90-sb-webui-tproxy
+
+  RULE_PREF="${TPROXY_RULE_PREF}" TPROXY_MARK="0x1" TPROXY_TABLE="${TPROXY_TABLE_NAME}" \
+    /etc/NetworkManager/dispatcher.d/90-sb-webui-tproxy eth0 up
+}
+
 install_singbox() {
   mkdir -p /etc/apt/keyrings
   curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
@@ -264,6 +280,7 @@ main() {
   configure_nginx
   install_singbox
   deploy_repo_files
+  install_tproxy_policy_routing
   seed_singbox_config
   build_webui
   enable_services

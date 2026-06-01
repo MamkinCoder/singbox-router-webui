@@ -7,6 +7,7 @@ Goal: rebuild Raspberry Pi gateway from clean Raspberry Pi OS with:
 - Pi-hole headless
 - Unbound on `127.0.0.1:5335`
 - sing-box + nftables + WebUI
+- NetworkManager dispatcher installs `fwmark 0x1 -> table tproxy -> lo`
 - nginx routing:
   - `http://<LOCAL_DOMAIN>/` -> WebUI
   - `http://<LOCAL_DOMAIN>/admin/` -> Pi-hole
