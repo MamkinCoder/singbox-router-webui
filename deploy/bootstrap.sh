@@ -41,6 +41,26 @@ prompt_if_empty() {
   export "$var_name"
 }
 
+trim_var() {
+  local var_name="$1"
+  local value="${!var_name-}"
+  value="$(printf '%s' "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  printf -v "$var_name" '%s' "$value"
+  export "$var_name"
+}
+
+validate_local_domain() {
+  trim_var LOCAL_DOMAIN
+  if [[ -z "$LOCAL_DOMAIN" ]]; then
+    echo "LOCAL_DOMAIN empty. Example: rp.i"
+    exit 1
+  fi
+  if [[ ! "$LOCAL_DOMAIN" =~ ^[A-Za-z0-9.-]+\.[A-Za-z0-9-]+$ ]]; then
+    echo "LOCAL_DOMAIN invalid: $LOCAL_DOMAIN"
+    exit 1
+  fi
+}
+
 install_packages() {
   apt-get update
   apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates nodejs npm
@@ -280,6 +300,7 @@ main() {
   prompt_if_empty LOCAL_DOMAIN "Local domain for WebUI and Pi-hole (example: rp.i)"
   prompt_if_empty PIHOLE_PASSWORD "Pi-hole admin password" 1
   prompt_if_empty VLESS_LINK "Optional VLESS link to save now (leave empty to skip)"
+  validate_local_domain
 
   install_packages
   configure_static_ip
