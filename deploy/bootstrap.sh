@@ -180,6 +180,10 @@ Signed-By: /etc/apt/keyrings/sagernet.asc
 EOF
   apt-get update
   apt-get install -y sing-box
+
+  install -d /etc/systemd/system/sing-box.service.d
+  install -m 0644 "$DEPLOY_DIR/templates/sing-box.override.conf" /etc/systemd/system/sing-box.service.d/override.conf
+  systemctl daemon-reload
 }
 
 seed_singbox_config() {
