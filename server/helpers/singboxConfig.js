@@ -17,12 +17,15 @@ function normalizeTproxyInbound(cfg) {
   const idx = inbounds.findIndex((inbound) => inbound && inbound.tag === 'tproxy-in');
   if (idx === -1) return cfg;
 
-  inbounds[idx] = {
+  const next = {
     ...inbounds[idx],
     listen: '0.0.0.0',
-    sniff: true,
-    sniff_override_destination: true,
   };
+  delete next.sniff;
+  delete next.sniff_override_destination;
+  delete next.sniff_timeout;
+  delete next.domain_strategy;
+  inbounds[idx] = next;
 
   return cfg;
 }
@@ -30,6 +33,7 @@ function normalizeTproxyInbound(cfg) {
 function normalizeRouteRules(route) {
   if (!Array.isArray(route.rules)) route.rules = [];
 
+  let hasTproxySniff = false;
   route.rules = route.rules.filter((rule) => {
     if (!rule) return false;
 
@@ -37,12 +41,20 @@ function normalizeRouteRules(route) {
     // defeats split routing and breaks direct-path behavior.
     if (rule.inbound === 'tproxy-in' && rule.outbound === 'vpn') return false;
 
-    // Older sing-box config drift used route-level sniff action; keep sniff on
-    // inbound instead so routing stays simple and aligned with repo docs.
-    if (rule.inbound === 'tproxy-in' && rule.action === 'sniff') return false;
+    if (rule.inbound === 'tproxy-in' && rule.action === 'sniff') {
+      hasTproxySniff = true;
+    }
 
     return true;
   });
+
+  if (!hasTproxySniff) {
+    route.rules.unshift({
+      inbound: 'tproxy-in',
+      action: 'sniff',
+      timeout: '1s',
+    });
+  }
 }
 
 function normalizeSingBoxRoute(cfg) {
