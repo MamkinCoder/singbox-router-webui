@@ -179,6 +179,12 @@ deploy_repo_files() {
   systemctl daemon-reload
 }
 
+install_webui_sudoers() {
+  install -d /etc/sudoers.d
+  install -m 0440 "$DEPLOY_DIR/templates/sb-webui.sudoers" /etc/sudoers.d/sb-webui
+  visudo -cf /etc/sudoers.d/sb-webui
+}
+
 install_tproxy_policy_routing() {
   install -d /etc/iproute2/rt_tables.d
   cat > /etc/iproute2/rt_tables.d/sb-webui.conf <<EOF
@@ -313,6 +319,7 @@ main() {
   configure_nginx
   install_singbox
   deploy_repo_files
+  install_webui_sudoers
   install_tproxy_policy_routing
   seed_singbox_config
   build_webui

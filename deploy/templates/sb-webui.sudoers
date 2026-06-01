@@ -1,0 +1,4 @@
+rpi ALL=(root) NOPASSWD: /usr/bin/install
+rpi ALL=(root) NOPASSWD: /usr/sbin/nft
+rpi ALL=(root) NOPASSWD: /bin/systemctl restart sing-box
+rpi ALL=(root) NOPASSWD: /bin/systemctl is-active sing-box
