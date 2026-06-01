@@ -27,7 +27,8 @@ prompt_if_empty() {
   local var_name="$1"
   local prompt="$2"
   local secret="${3:-0}"
-  if [[ -n "${!var_name}" ]]; then
+  local current="${!var_name-}"
+  if [[ -n "$current" ]]; then
     return
   fi
   if [[ "$secret" == "1" ]]; then
