@@ -16,6 +16,22 @@ Thin Node/React control panel for the Raspberry Pi transparent VPN gateway descr
 
 To run locally for testing you can start the backend with `node server.js` and the dev server with `npm run dev` inside `web/`, but the production setup relies on the built bundle.
 
+## Deploy
+
+`deploy/` contains rebuild scaffolding for clean Raspberry Pi installs:
+
+- static `eth0` IP at `192.168.0.4`
+- Pi-hole headless + Unbound upstream at `127.0.0.1#5335`
+- nginx local-domain routing for WebUI and Pi-hole fallback under `/admin/`
+- default adlists imported into Pi-hole gravity
+
+Run on Pi after checkout:
+
+```bash
+sudo bash deploy/bootstrap.sh
+sudo bash deploy/verify.sh
+```
+
 ## Deployment Tips
 
 - Keep `server.js` as the entry point for `sb-webui.service`; it still `require()`s the split-out `server/app.js` but allows the service to stay simple.

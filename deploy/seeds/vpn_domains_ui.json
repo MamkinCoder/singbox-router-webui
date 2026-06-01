@@ -1,0 +1,329 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "id": "ip-check",
+      "enabled": true,
+      "domains": [
+        "2ip.io"
+      ]
+    },
+    {
+      "id": "youtube",
+      "enabled": true,
+      "domains": [
+        "youtube.com",
+        "googlevideo.com",
+        "ytimg.com",
+        "ggpht.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "youtubei.googleapis.com",
+        "youtube.googleapis.com",
+        "s.ytimg.com",
+        "ytimg.l.google.com",
+        "youtube-ui.l.google.com",
+        "ytstatic.l.google.com",
+        "google.com",
+        "gstatic.com",
+        "googleusercontent.com",
+        "pornhub.org",
+        "pornhub.com"
+      ]
+    },
+    {
+      "id": "openai-chatgpt",
+      "enabled": true,
+      "domains": [
+        "openai.com",
+        "chatgpt.com",
+        "oaistatic.com",
+        "oaiusercontent.com",
+        "api.openai.com",
+        "platform.openai.com",
+        "auth.openai.com",
+        "id.openai.com",
+        "auth0.com",
+        "cdn.auth0.com",
+        "arkoselabs.com",
+        "funcaptcha.com",
+        "hcaptcha.com",
+        "accounts.google.com",
+        "appleid.apple.com"
+      ]
+    },
+    {
+      "id": "meta",
+      "enabled": true,
+      "domains": [
+        "facebook.com",
+        "fbcdn.net",
+        "messenger.com",
+        "whatsapp.com",
+        "meta.com",
+        "instagram.com",
+        "cdninstagram.com"
+      ]
+    },
+    {
+      "id": "discord",
+      "enabled": true,
+      "domains": [
+        "discord.com",
+        "discord.gg",
+        "discordapp.com",
+        "discordcdn.com",
+        "discordapp.net",
+        "dis.gd",
+        "discord.media",
+        "discord.dev",
+        "discord.new",
+        "discord.gift",
+        "discordstatus.com",
+        "discord.co"
+      ]
+    },
+    {
+      "id": "twitter-x",
+      "enabled": true,
+      "domains": [
+        "twitter.com",
+        "x.com",
+        "t.co",
+        "twimg.com",
+        "pbs.twimg.com",
+        "abs.twimg.com",
+        "video.twimg.com",
+        "api.twitter.com",
+        "api.x.com",
+        "grok.com"
+      ]
+    },
+    {
+      "id": "tiktok",
+      "enabled": true,
+      "domains": [
+        "tiktok.com",
+        "tiktokcdn.com",
+        "tiktokv.com"
+      ]
+    },
+    {
+      "id": "reddit",
+      "enabled": true,
+      "domains": [
+        "reddit.com",
+        "redd.it",
+        "redditmedia.com"
+      ]
+    },
+    {
+      "id": "medium",
+      "enabled": true,
+      "domains": [
+        "medium.com"
+      ]
+    },
+    {
+      "id": "roblox",
+      "enabled": true,
+      "domains": [
+        "roblox.com",
+        "rbxcdn.com"
+      ]
+    },
+    {
+      "id": "rutracker",
+      "enabled": true,
+      "domains": [
+        "rutracker.org",
+        "www.rutracker.org",
+        "rutracker.net",
+        "www.rutracker.net",
+        "rutracker.cc",
+        "www.rutracker.cc",
+        "rutracker.nl",
+        "www.rutracker.nl",
+        "rutracker.cr",
+        "www.rutracker.cr",
+        "rutracker.ru",
+        "www.rutracker.ru",
+        "rutracker.wiki",
+        "www.rutracker.wiki"
+      ]
+    },
+    {
+      "id": "other",
+      "enabled": true,
+      "domains": [
+        "cluesbysam.com",
+        "upscale.media",
+        "pornhub.com",
+        "hentailib.me",
+        "e-hentai.org",
+        "userbenchmark.com",
+        "reshade.me",
+        "sibrowser.ru",
+        "habr.com",
+        "arhivach.vc",
+        "mega.nz",
+        "rule34.gg",
+        "porno-island.site"
+      ]
+    },
+    {
+      "id": "epic-games",
+      "name": "New group",
+      "enabled": true,
+      "domains": [
+        "epicgames.com",
+        "www.epicgames.com",
+        "accounts.epicgames.com",
+        "www.accounts.epicgames.com",
+        "account-public-service-prod.ol.epicgames.com",
+        "store.epicgames.com",
+        "www.store.epicgames.com",
+        "payment-website-pci.ol.epicgames.com",
+        "payment-service-prod.ol.epicgames.com",
+        "orderprocessor-public-service-ecomprod01.ol.epicgames.com",
+        "stripe.com",
+        "api.stripe.com",
+        "js.stripe.com",
+        "hooks.stripe.com",
+        "paypal.com",
+        "www.paypal.com",
+        "api.paypal.com",
+        "epicgames.dev",
+        "launcher-public-service-prod.ol.epicgames.com",
+        "entitlement-public-service-prod.ol.epicgames.com",
+        "catalog-public-service-prod.ol.epicgames.com",
+        "akamaized.net",
+        "cloudfront.net",
+        "fastly.net"
+      ]
+    },
+    {
+      "id": "work",
+      "name": "New group",
+      "enabled": true,
+      "domains": [
+        "dash.shadowlos.xyz",
+        "shadowlos.xyz",
+        "vault.shadowlos.xyz",
+        "resend.com",
+        "amnezia.org",
+        "4pda.to",
+        "sentry.io",
+        "mxg329rhf8723fg278c9.com"
+      ]
+    },
+    {
+      "id": "whatsapp",
+      "name": "New group",
+      "enabled": true,
+      "domains": [
+        "whatsapp.com",
+        "www.whatsapp.com",
+        "web.whatsapp.com",
+        "api.whatsapp.com",
+        "chat.whatsapp.com",
+        "v.whatsapp.com",
+        "mmg.whatsapp.net",
+        "mmg-fna.whatsapp.net",
+        "mmg-fnb.whatsapp.net",
+        "mmg-fnc.whatsapp.net",
+        "mmg-fnd.whatsapp.net",
+        "mmg-fne.whatsapp.net",
+        "mmg-fnf.whatsapp.net",
+        "static.whatsapp.net",
+        "media.whatsapp.net",
+        "cdn.whatsapp.net",
+        "g.whatsapp.net",
+        "graph.whatsapp.net"
+      ]
+    },
+    {
+      "id": "new-group",
+      "name": "New group",
+      "enabled": true,
+      "domains": [
+        "telegram.org",
+        "www.telegram.org",
+        "t.me",
+        "telegram.me",
+        "web.telegram.org",
+        "desktop.telegram.org",
+        "api.telegram.org",
+        "core.telegram.org",
+        "my.telegram.org",
+        "telegram-cdn.org",
+        "tcdn.me",
+        "cdn.telegram.org",
+        "cdn1.telegram.org",
+        "cdn2.telegram.org",
+        "cdn3.telegram.org",
+        "cdn4.telegram.org",
+        "td.telegram.org",
+        "telegram.dog",
+        "tx.me",
+        "cdn-telegram.org",
+        "cdn1.cdn-telegram.org",
+        "cdn2.cdn-telegram.org",
+        "cdn3.cdn-telegram.org",
+        "cdn4.cdn-telegram.org",
+        "cdn5.cdn-telegram.org",
+        "telegra.ph",
+        "graph.org",
+        "telesco.pe",
+        "comments.app",
+        "contest.com",
+        "fragment.com",
+        "quiz.directory",
+        "tdesktop.com",
+        "tg.dev",
+        "telegram.space",
+        "telega.one",
+        "tgram.org",
+        "torg.org",
+        "usercontent.dev",
+        "telegramapp.org"
+      ]
+    },
+    {
+      "id": "spotify",
+      "name": "New group",
+      "enabled": true,
+      "domains": [
+        "spotify.com",
+        "open.spotify.com",
+        "accounts.spotify.com",
+        "api.spotify.com",
+        "spclient.wg.spotify.com",
+        "dealer.spotify.com",
+        "gew1-spclient.spotify.com",
+        "gew1-dealer.spotify.com",
+        "cdn.spotify.com",
+        "audio-ak.spotify.com",
+        "audio-fa.scdn.co",
+        "audio4-fa.scdn.co",
+        "audio-fa.scdn.co.edgesuite.net",
+        "i.scdn.co",
+        "scdn.co",
+        "image-cdn-ak.spotifycdn.com",
+        "heads-fa.spotify.com",
+        "heads4-fa.spotify.com",
+        "heads-ak.spotify.com",
+        "video-fa.scdn.co",
+        "video-ak.scdn.co",
+        "spotifycdn.com",
+        "spotifycdn.net",
+        "apresolve.spotify.com",
+        "ap.spotify.com",
+        "geo.spotify.com",
+        "redirector.spotify.com"
+      ]
+    }
+  ]
+}
