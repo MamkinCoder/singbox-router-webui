@@ -255,17 +255,13 @@ enable_services() {
 }
 
 seed_local_dns() {
-  install -d /etc/dnsmasq.d /etc/pihole
+  install -d /etc/dnsmasq.d
   cat > /etc/dnsmasq.d/98-sb-webui-local.conf <<EOF
 address=/${LOCAL_DOMAIN}/${PI_STATIC_IP%/*}
 address=/vpn.home/${PI_STATIC_IP%/*}
 address=/pi.hole/${PI_STATIC_IP%/*}
 EOF
-  cat > /etc/pihole/custom.list <<EOF
-${PI_STATIC_IP%/*} ${LOCAL_DOMAIN}
-${PI_STATIC_IP%/*} vpn.home
-${PI_STATIC_IP%/*} pi.hole
-EOF
+  pihole-FTL --config dns.hosts "[\"${PI_STATIC_IP%/*} ${LOCAL_DOMAIN}\",\"${PI_STATIC_IP%/*} vpn.home\",\"${PI_STATIC_IP%/*} pi.hole\"]"
   systemctl restart pihole-FTL
 }
 
