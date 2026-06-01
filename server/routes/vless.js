@@ -2,7 +2,6 @@
 
 const { parseVlessLink } = require('../vless');
 const { readJsonSafe, readJsonDetailed, writeJsonWithSudoInstall } = require('../helpers/fs');
-const { deepMergeKeep } = require('../helpers/merge');
 const {
   SINGBOX_CONFIG_PATH,
 } = require('../config');
@@ -76,7 +75,13 @@ function registerVlessRoutes(app) {
     const idx = cfg.outbounds.findIndex((x) => x && x.tag === 'vpn');
     if (idx === -1) return res.status(404).json({ error: 'No outbound with tag "vpn" found' });
 
-    cfg.outbounds[idx] = deepMergeKeep(cfg.outbounds[idx], patch);
+    // Replace outbound body instead of deep-merging it. Reality links may
+    // intentionally omit fields like short_id, and merge would keep stale
+    // values from an older config, causing handshake failures.
+    cfg.outbounds[idx] = {
+      tag: 'vpn',
+      ...patch,
+    };
     normalizeSingBoxRoute(cfg);
 
     await writeJsonWithSudoInstall(SINGBOX_CONFIG_PATH, cfg);
