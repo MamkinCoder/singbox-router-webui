@@ -26,5 +26,15 @@ nft list chain inet sbprx prerouting || true
 echo "--- ip rule ---"
 ip rule show || true
 
+echo "--- sysctl ---"
+sysctl \
+  net.ipv4.ip_forward \
+  net.ipv4.conf.all.src_valid_mark \
+  net.ipv4.conf.eth0.src_valid_mark \
+  net.ipv4.conf.all.rp_filter \
+  net.ipv4.conf.eth0.rp_filter \
+  net.ipv4.conf.eth0.accept_local \
+  net.ipv4.conf.eth0.route_localnet || true
+
 echo "--- WebUI ---"
 curl -I --max-time 5 http://127.0.0.1:3001/ || true
