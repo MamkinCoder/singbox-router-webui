@@ -100,16 +100,25 @@ configure_wifi_fallback() {
 }
 
 install_pihole() {
-  export PIHOLE_SKIP_OS_CHECK=true
-  export PIHOLE_INTERFACE=eth0
-  export IPV4_ADDRESS="$PI_STATIC_IP"
-  export QUERY_LOGGING=true
-  export INSTALL_WEB_SERVER=true
-  export INSTALL_WEB_INTERFACE=true
-  export LIGHTTPD_ENABLED=false
-  export DNSMASQ_LISTENING=local
-  export WEBPASSWORD="$PIHOLE_PASSWORD"
+  install -d /etc/pihole
+  cat > /etc/pihole/setupVars.conf <<EOF
+PIHOLE_INTERFACE=eth0
+IPV4_ADDRESS=${PI_STATIC_IP}
+IPV6_ADDRESS=
+QUERY_LOGGING=true
+INSTALL_WEB_SERVER=true
+INSTALL_WEB_INTERFACE=true
+LIGHTTPD_ENABLED=false
+CACHE_SIZE=10000
+DNS_FQDN_REQUIRED=true
+DNS_BOGUS_PRIV=true
+DNSMASQ_LISTENING=local
+WEBPASSWORD=${PIHOLE_PASSWORD}
+PIHOLE_DNS_1=127.0.0.1#5335
+PIHOLE_DNS_2=1.1.1.1
+EOF
 
+  export PIHOLE_SKIP_OS_CHECK=true
   curl -sSL https://install.pi-hole.net | bash /dev/stdin --unattended
 }
 
