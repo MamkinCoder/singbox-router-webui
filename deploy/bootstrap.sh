@@ -130,6 +130,12 @@ configure_unbound() {
   systemctl restart unbound
 }
 
+configure_router_sysctl() {
+  install -d /etc/sysctl.d
+  install -m 0644 "$DEPLOY_DIR/templates/router-sysctl.conf" /etc/sysctl.d/99-sb-webui-router.conf
+  sysctl --system >/dev/null
+}
+
 configure_nginx() {
   sed "s/__LOCAL_DOMAIN__/${LOCAL_DOMAIN}/g" \
     "$DEPLOY_DIR/templates/nginx-local-domain.conf" \
@@ -249,11 +255,16 @@ enable_services() {
 }
 
 seed_local_dns() {
-  install -d /etc/dnsmasq.d
+  install -d /etc/dnsmasq.d /etc/pihole
   cat > /etc/dnsmasq.d/98-sb-webui-local.conf <<EOF
 address=/${LOCAL_DOMAIN}/${PI_STATIC_IP%/*}
 address=/vpn.home/${PI_STATIC_IP%/*}
 address=/pi.hole/${PI_STATIC_IP%/*}
+EOF
+  cat > /etc/pihole/custom.list <<EOF
+${PI_STATIC_IP%/*} ${LOCAL_DOMAIN}
+${PI_STATIC_IP%/*} vpn.home
+${PI_STATIC_IP%/*} pi.hole
 EOF
   systemctl restart pihole-FTL
 }
@@ -280,6 +291,7 @@ main() {
   install_pihole
   configure_unbound
   configure_pihole
+  configure_router_sysctl
   seed_local_dns
   configure_nginx
   install_singbox
