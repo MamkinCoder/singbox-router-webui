@@ -13,8 +13,6 @@ LAN_CIDR="${LAN_CIDR:-192.168.0.0/24}"
 SB_WEBUI_DIR="${SB_WEBUI_DIR:-/opt/sb-webui}"
 SB_WEBUI_USER="${SB_WEBUI_USER:-rpi}"
 SINGBOX_DEFAULT_INTERFACE="${SINGBOX_DEFAULT_INTERFACE:-eth0}"
-WIFI_SSID="${WIFI_SSID:-}"
-WIFI_PASSWORD="${WIFI_PASSWORD:-}"
 
 require_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -61,40 +59,6 @@ configure_static_ip() {
     ipv4.route-metric 100 \
     ipv6.method ignore \
     connection.autoconnect yes
-
-  nmcli connection up "$conn" || true
-}
-
-configure_wifi_fallback() {
-  if [[ -z "$WIFI_SSID" ]]; then
-    return
-  fi
-
-  if ! nmcli device status | awk '$1=="wlan0"{found=1} END{exit found?0:1}'; then
-    echo "wlan0 not present, skip Wi-Fi fallback"
-    return
-  fi
-
-  local conn="sb-fallback-wlan0"
-  if nmcli -t -f NAME connection show | grep -Fxq "$conn"; then
-    nmcli connection modify "$conn" \
-      802-11-wireless.ssid "$WIFI_SSID" \
-      wifi-sec.key-mgmt wpa-psk \
-      wifi-sec.psk "$WIFI_PASSWORD" \
-      ipv4.method auto \
-      ipv4.route-metric 600 \
-      ipv6.method ignore \
-      connection.autoconnect yes
-  else
-    nmcli connection add type wifi ifname wlan0 con-name "$conn" ssid "$WIFI_SSID"
-    nmcli connection modify "$conn" \
-      wifi-sec.key-mgmt wpa-psk \
-      wifi-sec.psk "$WIFI_PASSWORD" \
-      ipv4.method auto \
-      ipv4.route-metric 600 \
-      ipv6.method ignore \
-      connection.autoconnect yes
-  fi
 
   nmcli connection up "$conn" || true
 }
@@ -189,7 +153,6 @@ PI_STATIC_IP=${PI_STATIC_IP}
 PI_GATEWAY=${PI_GATEWAY}
 LAN_CIDR=${LAN_CIDR}
 SINGBOX_DEFAULT_INTERFACE=${SINGBOX_DEFAULT_INTERFACE}
-WIFI_SSID=${WIFI_SSID}
 EOF
 }
 
@@ -197,15 +160,10 @@ main() {
   require_root
   prompt_if_empty LOCAL_DOMAIN "Local domain for WebUI and Pi-hole (example: rp.i)"
   prompt_if_empty PIHOLE_PASSWORD "Pi-hole admin password" 1
-  prompt_if_empty WIFI_SSID "Optional Wi-Fi SSID for fallback SSH (leave empty to skip)"
-  if [[ -n "${WIFI_SSID}" ]]; then
-    prompt_if_empty WIFI_PASSWORD "Wi-Fi password for fallback SSH" 1
-  fi
   prompt_if_empty VLESS_LINK "Optional VLESS link to save now (leave empty to skip)"
 
   install_packages
   configure_static_ip
-  configure_wifi_fallback
   install_pihole
   configure_unbound
   configure_pihole
