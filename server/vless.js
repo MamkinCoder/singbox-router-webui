@@ -101,6 +101,7 @@ function parseVlessLink(vless) {
   }
 
   const patch = {
+    type: 'vless',
     server,
     server_port,
     uuid,

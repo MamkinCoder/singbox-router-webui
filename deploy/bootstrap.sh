@@ -40,7 +40,7 @@ prompt_if_empty() {
 
 install_packages() {
   apt-get update
-  apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates
+  apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates nodejs npm
 }
 
 configure_static_ip() {
@@ -150,6 +150,84 @@ deploy_repo_files() {
   systemctl daemon-reload
 }
 
+install_singbox() {
+  mkdir -p /etc/apt/keyrings
+  curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
+  chmod a+r /etc/apt/keyrings/sagernet.asc
+  cat > /etc/apt/sources.list.d/sagernet.sources <<EOF
+Types: deb
+URIs: https://deb.sagernet.org/
+Suites: *
+Components: *
+Enabled: yes
+Signed-By: /etc/apt/keyrings/sagernet.asc
+EOF
+  apt-get update
+  apt-get install -y sing-box
+}
+
+seed_singbox_config() {
+  ROOT_DIR="$ROOT_DIR" VLESS_LINK="${VLESS_LINK}" SINGBOX_DEFAULT_INTERFACE="${SINGBOX_DEFAULT_INTERFACE}" node <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const root = process.env.ROOT_DIR;
+const vless = String(process.env.VLESS_LINK || '').trim();
+const iface = String(process.env.SINGBOX_DEFAULT_INTERFACE || 'eth0').trim();
+const { parseVlessLink } = require(path.join(root, 'server', 'vless'));
+const { buildFlatRulesFromGroups } = require(path.join(root, 'server', 'helpers', 'domains'));
+const ui = JSON.parse(fs.readFileSync(path.join(root, 'deploy', 'seeds', 'vpn_domains_ui.json'), 'utf8'));
+const flat = buildFlatRulesFromGroups(ui);
+const vpnOutbound = vless ? { tag: 'vpn', ...parseVlessLink(vless) } : { type: 'direct', tag: 'vpn' };
+const vpnEnabled = Boolean(vless);
+const cfg = {
+  log: { level: 'warn', timestamp: true },
+  inbounds: [
+    { type: 'tproxy', tag: 'tproxy-in', listen: '0.0.0.0', listen_port: 12345 },
+    { type: 'socks', tag: 'socks-in', listen: '127.0.0.1', listen_port: 1080 }
+  ],
+  outbounds: [
+    vpnOutbound,
+    { type: 'direct', tag: 'direct' },
+    { type: 'block', tag: 'block' }
+  ],
+  route: {
+    final: 'direct',
+    auto_detect_interface: false,
+    default_interface: iface,
+    rules: [
+      { inbound: 'tproxy-in', action: 'sniff', timeout: '1s' },
+      { inbound: 'socks-in', outbound: vpnEnabled ? 'vpn' : 'direct' },
+      { ip_cidr: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '169.254.0.0/16'], outbound: 'direct' },
+      { rule_set: ['vpn-domains'], outbound: vpnEnabled ? 'vpn' : 'direct' }
+    ],
+    rule_set: [
+      { tag: 'vpn-domains', type: 'local', format: 'source', path: '/etc/sing-box/rules/vpn_domains.json' }
+    ]
+  }
+};
+fs.writeFileSync('/etc/sing-box/config.json', JSON.stringify(cfg, null, 2) + '\n');
+fs.writeFileSync('/etc/sing-box/rules/vpn_domains_ui.json', JSON.stringify(ui, null, 2) + '\n');
+fs.writeFileSync('/etc/sing-box/rules/vpn_domains.json', JSON.stringify(flat, null, 2) + '\n');
+fs.writeFileSync('/etc/sing-box/clients_policy.json', JSON.stringify({ version: 1, clients: {} }, null, 2) + '\n');
+NODE
+}
+
+build_webui() {
+  install -d -o "$SB_WEBUI_USER" -g "$SB_WEBUI_USER" "$ROOT_DIR/vless-templates"
+  cd "$ROOT_DIR"
+  npm install
+  cd "$ROOT_DIR/web"
+  npm install --include=dev
+  npm run build
+}
+
+enable_services() {
+  systemctl enable sing-box
+  systemctl restart sing-box
+  systemctl enable sb-webui
+  systemctl restart sb-webui
+}
+
 seed_local_dns() {
   install -d /etc/dnsmasq.d
   cat > /etc/dnsmasq.d/98-sb-webui-local.conf <<EOF
@@ -184,14 +262,12 @@ main() {
   configure_pihole
   seed_local_dns
   configure_nginx
+  install_singbox
   deploy_repo_files
+  seed_singbox_config
+  build_webui
+  enable_services
   save_bootstrap_env
-
-  if [[ -n "${VLESS_LINK}" ]]; then
-    curl -fsS -X PUT http://127.0.0.1:3001/sb/api/vless \
-      -H 'content-type: application/json' \
-      --data "$(jq -n --arg vless "$VLESS_LINK" '{vless:$vless}')" || true
-  fi
 
   echo "Bootstrap done. Run: sudo bash $DEPLOY_DIR/verify.sh"
 }
