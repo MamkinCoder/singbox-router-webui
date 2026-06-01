@@ -48,4 +48,4 @@ Script prompts for:
 - Pi-hole adlists are stored in gravity DB, not old `adlists.list`.
 - Pi-hole upstream is set to `127.0.0.1#5335`.
 - WebUI stays on backend `127.0.0.1:3001`, nginx fronts it on local domain.
-- `wlan0` should be preconfigured by Raspberry Pi Imager and is left alone by deploy script.
+- `wlan0` should be preconfigured by Raspberry Pi Imager; deploy script keeps it as rescue path by forcing higher route metric than `eth0`.

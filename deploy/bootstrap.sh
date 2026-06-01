@@ -63,6 +63,20 @@ configure_static_ip() {
   nmcli connection up "$conn" || true
 }
 
+deprioritize_existing_wifi() {
+  if ! nmcli device status | awk '$1=="wlan0"{found=1} END{exit found?0:1}'; then
+    return
+  fi
+
+  while IFS= read -r conn; do
+    [[ -z "$conn" ]] && continue
+    nmcli connection modify "$conn" \
+      ipv4.route-metric 600 \
+      ipv6.route-metric 600 \
+      connection.autoconnect yes || true
+  done < <(nmcli -t -f NAME,DEVICE connection show | awk -F: '$2=="wlan0"{print $1}')
+}
+
 install_pihole() {
   install -d /etc/pihole
   cat > /etc/pihole/setupVars.conf <<EOF
@@ -164,6 +178,7 @@ main() {
 
   install_packages
   configure_static_ip
+  deprioritize_existing_wifi
   install_pihole
   configure_unbound
   configure_pihole
