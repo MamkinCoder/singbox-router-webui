@@ -4,7 +4,7 @@ import api from '../api.js'
 import { cleanError } from '../utils.js'
 
 export default function VlessTab({ setStatus }) {
-  const [vless, setVless] = useState('')
+  const [link, setLink] = useState('')
   const [current, setCurrent] = useState('')
   const [templates, setTemplates] = useState([])
   const [templateName, setTemplateName] = useState('')
@@ -39,23 +39,23 @@ export default function VlessTab({ setStatus }) {
   }, [])
 
   const apply = async () => {
-    if (!vless.trim()) return setStatus({ msg: 'Paste vless://… first', ok: false })
+    if (!link.trim()) return setStatus({ msg: 'Paste VPN link first', ok: false })
     try {
-      setStatus({ msg: 'Applying VLESS + restarting…', ok: null })
-      await api.put('/sb/api/vless', { vless: vless.trim() })
-      setStatus({ msg: 'Applied VLESS OK', ok: true })
+      setStatus({ msg: 'Applying VPN link + restarting…', ok: null })
+      await api.put('/sb/api/vless', { link: link.trim() })
+      setStatus({ msg: 'Applied VPN link OK', ok: true })
       await refresh()
       await refreshTemplates()
     } catch (e) {
-      setStatus({ msg: `VLESS apply failed: ${cleanError(e)}`, ok: false })
+      setStatus({ msg: `VPN apply failed: ${cleanError(e)}`, ok: false })
     }
   }
 
   const saveTemplate = async () => {
-    if (!vless.trim()) return setStatus({ msg: 'Paste vless://… first', ok: false })
+    if (!link.trim()) return setStatus({ msg: 'Paste VPN link first', ok: false })
     try {
       setStatus({ msg: 'Saving template…', ok: null })
-      await api.post('/sb/api/vless/templates', { name: templateName, vless: vless.trim() })
+      await api.post('/sb/api/vless/templates', { name: templateName, link: link.trim() })
       setStatus({ msg: 'Template saved', ok: true })
       setTemplateName('')
       await refreshTemplates()
@@ -88,7 +88,7 @@ export default function VlessTab({ setStatus }) {
   const loadTemplate = async (id) => {
     try {
       const tpl = await api.get(`/sb/api/vless/templates/${encodeURIComponent(id)}`)
-      setVless(tpl.vless || '')
+      setLink(tpl.link || tpl.vless || '')
       setTemplateName(tpl.name || '')
       setStatus({ msg: `Loaded ${tpl.name || 'template'}`, ok: true })
     } catch (e) {
@@ -102,7 +102,7 @@ export default function VlessTab({ setStatus }) {
         <div className="card">
           <div className="legacyRowBlock">
             <div>
-              <div className="legacyRowBlockTitle">Paste VLESS</div>
+              <div className="legacyRowBlockTitle">Paste VPN Link</div>
               <div className="legacyRowBlockSubtitle">Updates outbounds[tag=vpn] in /etc/sing-box/config.json</div>
             </div>
             <button className="btn primary" onClick={apply}>
@@ -112,9 +112,9 @@ export default function VlessTab({ setStatus }) {
         <div className="legacyRowBlock legacyRowBlockColumn">
           <textarea
             className="textarea legacyRowBlockInputs"
-            value={vless}
-            onChange={(e) => setVless(e.target.value)}
-            placeholder="vless://UUID@host:443?..."
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="vless://..., tuic://..."
           />
         </div>
         <div className="legacyRowBlock">
@@ -137,7 +137,7 @@ export default function VlessTab({ setStatus }) {
       </div>
 
       <div className="card">
-        <div className="legacyRowBlockTitle" style={{ marginBottom: 6 }}>Saved VLESS templates</div>
+        <div className="legacyRowBlockTitle" style={{ marginBottom: 6 }}>Saved VPN templates</div>
         {templatesLoading ? (
           <div className="muted" style={{ marginTop: 10 }}>
             Loading…

@@ -35,9 +35,9 @@ async function exists(file) {
   }
 }
 
-function extractNameFromVless(vless) {
+function extractNameFromLink(link) {
   try {
-    const parsed = new URL(vless);
+    const parsed = new URL(link);
     const hash = (parsed.hash || '').replace(/^#/, '').trim();
     if (hash) return hash;
   } catch {
@@ -76,13 +76,15 @@ async function readTemplate(id) {
   const full = getTemplatePath(id);
   const raw = await fsp.readFile(full, 'utf8');
   const data = JSON.parse(raw);
-  if (!data?.vless) throw new Error('Template missing vless string');
-  return { id, name: String(data.name || ''), vless: String(data.vless) };
+  const link = data?.link || data?.vless;
+  if (!link) throw new Error('Template missing outbound link');
+  return { id, name: String(data.name || ''), link: String(link), vless: String(link) };
 }
 
-async function saveTemplate({ name, vless }) {
+async function saveTemplate({ name, link, vless }) {
   await ensureDir();
-  const displayName = String(name || '').trim() || extractNameFromVless(vless) || 'vless-template';
+  const rawLink = String(link || vless || '').trim();
+  const displayName = String(name || '').trim() || extractNameFromLink(rawLink) || 'vpn-template';
   const base = sanitizeTemplateFilename(displayName);
   let idx = 0;
   let candidate;
@@ -93,7 +95,7 @@ async function saveTemplate({ name, vless }) {
     if (!(await exists(full))) break;
     idx += 1;
   }
-  const payload = { name: displayName, vless: String(vless).trim() };
+  const payload = { name: displayName, link: rawLink };
   await fsp.writeFile(path.join(VLESS_TEMPLATES_DIR, candidate), JSON.stringify(payload, null, 2) + '\n', 'utf8');
   return { id: candidate, name: displayName };
 }

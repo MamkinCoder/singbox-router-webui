@@ -1,6 +1,6 @@
 'use strict';
 
-const { parseVlessLink } = require('../vless');
+const { parseOutboundLink } = require('../vless');
 const { readJsonSafe, readJsonDetailed, writeJsonWithSudoInstall } = require('../helpers/fs');
 const {
   SINGBOX_CONFIG_PATH,
@@ -42,12 +42,12 @@ function registerVlessRoutes(app) {
 
   app.put('/sb/api/vless', async (req, res) => {
     const templateId = req.body?.template_id;
-    let vless = req.body?.vless;
+    let link = req.body?.link || req.body?.vless;
 
-    if (!vless && templateId) {
+    if (!link && templateId) {
       try {
         const tpl = await readTemplate(templateId);
-        vless = tpl.vless;
+        link = tpl.link || tpl.vless;
       } catch (e) {
         if (e.code === 'ENOENT' || /Invalid template/.test(String(e.message))) {
           return res.status(404).json({ error: 'Template not found' });
@@ -56,14 +56,14 @@ function registerVlessRoutes(app) {
       }
     }
 
-    if (!vless) return res.status(400).json({ error: 'Expected {vless:"vless://..."} or {template_id:"..."}' });
+    if (!link) return res.status(400).json({ error: 'Expected {link:"scheme://..."} or {template_id:"..."}' });
 
     let patch;
     try {
-      patch = parseVlessLink(vless);
+      patch = parseOutboundLink(link);
     } catch (e) {
       return res.status(400).json({
-        error: e.message || 'Invalid VLESS link',
+        error: e.message || 'Invalid outbound link',
         details: e.details || undefined,
       });
     }
@@ -110,20 +110,20 @@ function registerVlessRoutes(app) {
   });
 
   app.post('/sb/api/vless/templates', async (req, res) => {
-    const vless = req.body?.vless;
-    if (!vless) return res.status(400).json({ error: 'Expected {vless:"vless://..."}' });
+    const link = req.body?.link || req.body?.vless;
+    if (!link) return res.status(400).json({ error: 'Expected {link:"scheme://..."}' });
 
     try {
-      parseVlessLink(vless);
+      parseOutboundLink(link);
     } catch (e) {
       return res.status(400).json({
-        error: e.message || 'Invalid VLESS link',
+        error: e.message || 'Invalid outbound link',
         details: e.details || undefined,
       });
     }
 
     try {
-      const template = await saveTemplate({ name: req.body?.name, vless });
+      const template = await saveTemplate({ name: req.body?.name, link });
       res.json({ ok: true, template });
     } catch (e) {
       res.status(500).json({ error: 'Cannot save template', details: [String(e?.message || e)] });

@@ -223,14 +223,14 @@ seed_singbox_config() {
 const fs = require('fs');
 const path = require('path');
 const root = process.env.ROOT_DIR;
-const vless = String(process.env.VLESS_LINK || '').trim();
+const link = String(process.env.VLESS_LINK || '').trim();
 const iface = String(process.env.SINGBOX_DEFAULT_INTERFACE || 'eth0').trim();
-const { parseVlessLink } = require(path.join(root, 'server', 'vless'));
+const { parseOutboundLink } = require(path.join(root, 'server', 'vless'));
 const { buildFlatRulesFromGroups } = require(path.join(root, 'server', 'helpers', 'domains'));
 const ui = JSON.parse(fs.readFileSync(path.join(root, 'deploy', 'seeds', 'vpn_domains_ui.json'), 'utf8'));
 const flat = buildFlatRulesFromGroups(ui);
-const vpnOutbound = vless ? { tag: 'vpn', ...parseVlessLink(vless) } : { type: 'direct', tag: 'vpn' };
-const vpnEnabled = Boolean(vless);
+const vpnOutbound = link ? { tag: 'vpn', ...parseOutboundLink(link) } : { type: 'direct', tag: 'vpn' };
+const vpnEnabled = Boolean(link);
 const cfg = {
   log: { level: 'warn', timestamp: true },
   inbounds: [

@@ -16,24 +16,13 @@ function isShortId(v) {
   return /^[0-9a-f]{8,32}$/i.test(String(v || '').trim());
 }
 
-function parseVlessLink(vless) {
+function truthyParam(v) {
+  const s = String(v || '').trim().toLowerCase();
+  return s === '1' || s === 'true' || s === 'yes';
+}
+
+function parseVlessUrl(u) {
   const errors = [];
-
-  const s = String(vless || '').trim();
-  if (!s.startsWith('vless://')) {
-    const err = new Error('Not a vless:// link');
-    err.details = ['Must start with vless://'];
-    throw err;
-  }
-
-  let u;
-  try {
-    u = new URL(s);
-  } catch (e) {
-    const err = new Error('Invalid VLESS URL');
-    err.details = [String(e?.message || e)];
-    throw err;
-  }
 
   const uuid = decodeURIComponent(u.username || '').trim();
   const server = (u.hostname || '').trim();
@@ -84,7 +73,6 @@ function parseVlessLink(vless) {
 
   const sni = q.get('sni') || q.get('serverName') || undefined;
   const fp = q.get('fp') || q.get('fingerprint') || undefined;
-
   const pbk = q.get('pbk') || q.get('publicKey') || undefined;
   const sid = q.get('sid') || q.get('shortId') || undefined;
 
@@ -122,4 +110,103 @@ function parseVlessLink(vless) {
   return patch;
 }
 
-module.exports = { parseVlessLink };
+function parseTuicUrl(u) {
+  const errors = [];
+
+  const uuid = decodeURIComponent(u.username || '').trim();
+  const password = decodeURIComponent(u.password || '').trim();
+  const server = (u.hostname || '').trim();
+  const server_port = u.port ? Number(u.port) : NaN;
+
+  if (!isUuid(uuid)) errors.push('Invalid UUID in tuic://<uuid>:<password>@host');
+  if (!password) errors.push('Missing TUIC password');
+  if (!server || !isHostname(server)) errors.push('Invalid server hostname');
+  if (!Number.isInteger(server_port) || server_port <= 0 || server_port > 65535) errors.push('Invalid server port');
+
+  const q = u.searchParams;
+  const allowedQueryKeys = new Set([
+    'congestion_control',
+    'udp_relay_mode',
+    'security',
+    'sni',
+    'allowinsecure',
+    'alpn',
+  ]);
+  const seen = new Set();
+  for (const key of q.keys()) {
+    const normalized = key.toLowerCase();
+    if (!allowedQueryKeys.has(normalized) && !seen.has(normalized)) {
+      errors.push(`Unexpected query parameter "${key}"`);
+    }
+    seen.add(normalized);
+  }
+
+  const security = (q.get('security') || '').toLowerCase();
+  if (security && security !== 'tls') {
+    errors.push(`Unsupported security="${security}" (expected tls)`);
+  }
+
+  const sni = q.get('sni') || undefined;
+  const congestionControl = q.get('congestion_control') || undefined;
+  const udpRelayMode = q.get('udp_relay_mode') || undefined;
+  const allowInsecure = truthyParam(q.get('allowInsecure'));
+  const alpn = (q.get('alpn') || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (errors.length) {
+    const err = new Error('Invalid TUIC link');
+    err.details = errors;
+    throw err;
+  }
+
+  const patch = {
+    type: 'tuic',
+    server,
+    server_port,
+    uuid,
+    password,
+  };
+  if (congestionControl) patch.congestion_control = congestionControl;
+  if (udpRelayMode) patch.udp_relay_mode = udpRelayMode;
+
+  patch.tls = {
+    enabled: true,
+  };
+  if (sni) patch.tls.server_name = sni;
+  if (allowInsecure) patch.tls.insecure = true;
+  if (alpn.length) patch.tls.alpn = alpn;
+
+  return patch;
+}
+
+function parseOutboundLink(link) {
+  const s = String(link || '').trim();
+  let u;
+
+  try {
+    u = new URL(s);
+  } catch (e) {
+    const err = new Error('Invalid outbound URL');
+    err.details = [String(e?.message || e)];
+    throw err;
+  }
+
+  const scheme = (u.protocol || '').replace(/:$/, '').toLowerCase();
+  if (scheme === 'vless') return parseVlessUrl(u);
+  if (scheme === 'tuic') return parseTuicUrl(u);
+
+  const err = new Error('Unsupported outbound link');
+  err.details = [`Scheme "${scheme}" not supported yet`, 'Supported: vless://, tuic://'];
+  throw err;
+}
+
+function parseVlessLink(link) {
+  return parseOutboundLink(link);
+}
+
+module.exports = {
+  parseOutboundLink,
+  parseVlessLink,
+};
