@@ -39,7 +39,7 @@ export default function VlessTab({ setStatus }) {
   }, [])
 
   const apply = async () => {
-    if (!link.trim()) return setStatus({ msg: 'Paste VPN link first', ok: false })
+    if (!link.trim()) return setStatus({ msg: 'Paste VPN link or outbound JSON first', ok: false })
     try {
       setStatus({ msg: 'Applying VPN link + restarting…', ok: null })
       await api.put('/sb/api/vless', { link: link.trim() })
@@ -52,7 +52,7 @@ export default function VlessTab({ setStatus }) {
   }
 
   const saveTemplate = async () => {
-    if (!link.trim()) return setStatus({ msg: 'Paste VPN link first', ok: false })
+    if (!link.trim()) return setStatus({ msg: 'Paste VPN link or outbound JSON first', ok: false })
     try {
       setStatus({ msg: 'Saving template…', ok: null })
       await api.post('/sb/api/vless/templates', { name: templateName, link: link.trim() })
@@ -102,7 +102,7 @@ export default function VlessTab({ setStatus }) {
         <div className="card">
           <div className="legacyRowBlock">
             <div>
-              <div className="legacyRowBlockTitle">Paste VPN Link</div>
+              <div className="legacyRowBlockTitle">Paste VPN Link Or JSON</div>
               <div className="legacyRowBlockSubtitle">Updates outbounds[tag=vpn] in /etc/sing-box/config.json</div>
             </div>
             <button className="btn primary" onClick={apply}>
@@ -114,7 +114,7 @@ export default function VlessTab({ setStatus }) {
             className="textarea legacyRowBlockInputs"
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            placeholder="vless://..., tuic://..."
+            placeholder='vless://..., tuic://..., or {"type":"hysteria2",...}'
           />
         </div>
         <div className="legacyRowBlock">

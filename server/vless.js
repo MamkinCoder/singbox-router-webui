@@ -21,6 +21,37 @@ function truthyParam(v) {
   return s === '1' || s === 'true' || s === 'yes';
 }
 
+function normalizeRawOutbound(outbound) {
+  if (!outbound || typeof outbound !== 'object' || Array.isArray(outbound)) {
+    const err = new Error('Invalid outbound JSON');
+    err.details = ['Expected sing-box outbound object'];
+    throw err;
+  }
+
+  let candidate = outbound;
+  if (Array.isArray(outbound.outbounds)) {
+    candidate = outbound.outbounds[0];
+  } else if (outbound.outbound && typeof outbound.outbound === 'object') {
+    candidate = outbound.outbound;
+  }
+
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    const err = new Error('Invalid outbound JSON');
+    err.details = ['Cannot find outbound object'];
+    throw err;
+  }
+
+  if (!candidate.type || typeof candidate.type !== 'string') {
+    const err = new Error('Invalid outbound JSON');
+    err.details = ['Outbound object must include string "type"'];
+    throw err;
+  }
+
+  const next = { ...candidate };
+  delete next.tag;
+  return next;
+}
+
 function parseVlessUrl(u) {
   const errors = [];
 
@@ -183,6 +214,25 @@ function parseTuicUrl(u) {
 
 function parseOutboundLink(link) {
   const s = String(link || '').trim();
+  if (!s) {
+    const err = new Error('Empty outbound input');
+    err.details = ['Paste sing-box link or outbound JSON'];
+    throw err;
+  }
+
+  if (s.startsWith('{')) {
+    try {
+      return normalizeRawOutbound(JSON.parse(s));
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        const err = new Error('Invalid outbound JSON');
+        err.details = [String(e.message || e)];
+        throw err;
+      }
+      throw e;
+    }
+  }
+
   let u;
 
   try {
@@ -198,7 +248,11 @@ function parseOutboundLink(link) {
   if (scheme === 'tuic') return parseTuicUrl(u);
 
   const err = new Error('Unsupported outbound link');
-  err.details = [`Scheme "${scheme}" not supported yet`, 'Supported: vless://, tuic://'];
+  err.details = [
+    `Scheme "${scheme}" not supported yet`,
+    'Supported links: vless://, tuic://',
+    'Or paste raw sing-box outbound JSON',
+  ];
   throw err;
 }
 
