@@ -11,7 +11,11 @@ const END = '# === SB-WEBUI:END bypass_vpn_clients ===';
 function buildIps(policy, options = {}) {
   const { vpnEnabled = true } = options;
   const clients = policy?.clients || {};
-  const ips = vpnEnabled ? [] : [LAN_BYPASS_CIDR];
+  if (!vpnEnabled) {
+    return [LAN_BYPASS_CIDR];
+  }
+
+  const ips = [];
   for (const entry of Object.values(clients)) {
     if (!entry?.bypass_vpn || !entry?.ip) continue;
     const ip = String(entry.ip).trim();
