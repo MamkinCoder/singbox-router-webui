@@ -6,7 +6,7 @@ Goal: rebuild Raspberry Pi gateway from clean Raspberry Pi OS with:
 - flashed `wlan0` fallback for SSH rescue
 - Pi-hole headless
 - Unbound on `127.0.0.1:5335`
-- sing-box + nftables + WebUI
+- amnezia-box (Amnezia's sing-box fork) + nftables + WebUI
 - NetworkManager dispatcher installs `fwmark 0x1 -> table tproxy -> lo`
 - nginx routing:
   - `http://<LOCAL_DOMAIN>/` -> WebUI
@@ -49,5 +49,6 @@ Script prompts for:
 - Pi-hole adlists are stored in gravity DB, not old `adlists.list`.
 - Pi-hole upstream is set to `127.0.0.1#5335`.
 - WebUI stays on backend `127.0.0.1:3001`, nginx fronts it on local domain.
+- VPN core is built from `amnezia-vpn/amnezia-box` `dev-next`, not installed from upstream sing-box apt repo.
 - `wlan0` should be preconfigured by Raspberry Pi Imager; deploy script keeps it as rescue path by forcing higher route metric than `eth0`.
 - This Pi is a same-interface gateway: LAN clients enter on `eth0` and upstream internet also leaves via `eth0`. TPROXY needs extra sysctls here: `src_valid_mark=1`, `rp_filter=0`, `accept_local=1`, and `route_localnet=1`, or Linux may refuse to locally deliver intercepted foreign-destination packets to sing-box.

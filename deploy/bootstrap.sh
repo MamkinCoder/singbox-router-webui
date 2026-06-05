@@ -13,6 +13,10 @@ LAN_CIDR="${LAN_CIDR:-192.168.0.0/24}"
 SB_WEBUI_DIR="${SB_WEBUI_DIR:-/opt/sb-webui}"
 SB_WEBUI_USER="${SB_WEBUI_USER:-rpi}"
 SINGBOX_DEFAULT_INTERFACE="${SINGBOX_DEFAULT_INTERFACE:-eth0}"
+SINGBOX_REPO="${SINGBOX_REPO:-https://github.com/amnezia-vpn/amnezia-box.git}"
+SINGBOX_REF="${SINGBOX_REF:-dev-next}"
+SINGBOX_SRC_DIR="${SINGBOX_SRC_DIR:-/usr/local/src/amnezia-box}"
+GO_VERSION="${GO_VERSION:-1.24.7}"
 TPROXY_TABLE_NAME="${TPROXY_TABLE_NAME:-tproxy}"
 TPROXY_TABLE_ID="${TPROXY_TABLE_ID:-100}"
 TPROXY_RULE_PREF="${TPROXY_RULE_PREF:-100}"
@@ -63,7 +67,31 @@ validate_local_domain() {
 
 install_packages() {
   apt-get update
-  apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates nodejs npm
+  apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates nodejs npm build-essential xz-utils
+}
+
+detect_go_arch() {
+  case "$(dpkg --print-architecture)" in
+    arm64) echo "arm64" ;;
+    amd64) echo "amd64" ;;
+    armhf) echo "armv6l" ;;
+    *)
+      echo "Unsupported architecture for Go toolchain: $(dpkg --print-architecture)"
+      exit 1
+      ;;
+  esac
+}
+
+install_go_toolchain() {
+  local arch
+  arch="$(detect_go_arch)"
+  local tarball="go${GO_VERSION}.linux-${arch}.tar.gz"
+  local url="https://go.dev/dl/${tarball}"
+
+  rm -rf /usr/local/go
+  curl -fsSL "$url" -o "/tmp/${tarball}"
+  tar -C /usr/local -xzf "/tmp/${tarball}"
+  rm -f "/tmp/${tarball}"
 }
 
 configure_static_ip() {
@@ -199,22 +227,15 @@ EOF
 }
 
 install_singbox() {
-  mkdir -p /etc/apt/keyrings
-  curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
-  chmod a+r /etc/apt/keyrings/sagernet.asc
-  cat > /etc/apt/sources.list.d/sagernet.sources <<EOF
-Types: deb
-URIs: https://deb.sagernet.org/
-Suites: *
-Components: *
-Enabled: yes
-Signed-By: /etc/apt/keyrings/sagernet.asc
-EOF
-  apt-get update
-  apt-get install -y sing-box
+  install_go_toolchain
+  rm -rf "$SINGBOX_SRC_DIR"
+  git clone --depth 1 --branch "$SINGBOX_REF" "$SINGBOX_REPO" "$SINGBOX_SRC_DIR"
+  (
+    cd "$SINGBOX_SRC_DIR"
+    PATH="/usr/local/go/bin:$PATH" GOWORK=off /usr/local/go/bin/go build -trimpath -buildvcs=false -o /usr/bin/sing-box ./cmd/sing-box
+  )
 
-  install -d /etc/systemd/system/sing-box.service.d
-  install -m 0644 "$DEPLOY_DIR/templates/sing-box.override.conf" /etc/systemd/system/sing-box.service.d/override.conf
+  install -m 0644 "$DEPLOY_DIR/templates/sing-box.service" /etc/systemd/system/sing-box.service
   systemctl daemon-reload
 }
 
@@ -305,7 +326,7 @@ main() {
   require_root
   prompt_if_empty LOCAL_DOMAIN "Local domain for WebUI and Pi-hole (example: rp.i)"
   prompt_if_empty PIHOLE_PASSWORD "Pi-hole admin password" 1
-  prompt_if_empty VLESS_LINK "Optional VLESS link to save now (leave empty to skip)"
+  prompt_if_empty VLESS_LINK "Optional VPN link / config to save now (leave empty to skip)"
   validate_local_domain
 
   install_packages
