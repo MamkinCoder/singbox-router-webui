@@ -118,7 +118,9 @@ function parseAmneziaWgConf(text) {
   for (const key of ['Jc', 'Jmin', 'Jmax', 'S1', 'S2', 'S3', 'S4', 'H1', 'H2', 'H3', 'H4']) {
     if (iface[key] !== undefined) awgValues[key] = String(iface[key]).trim();
   }
-  const awgArray = buildAwgArray(awgValues);
+  for (const key of ['I1', 'I2', 'I3', 'I4', 'I5']) {
+    if (iface[key] !== undefined) awgValues[key] = String(iface[key]).trim();
+  }
 
   if (errors.length) {
     const err = new Error('Invalid AmneziaWG config');
@@ -127,36 +129,63 @@ function parseAmneziaWgConf(text) {
   }
 
   const patch = {
-    type: 'wireguard',
-    server: host,
-    server_port: port,
-    local_address: addresses,
+    type: 'awg',
+    address: addresses,
     private_key: privateKey,
-    peer_public_key: publicKey,
+    peers: [
+      {
+        address: host,
+        port,
+        public_key: publicKey,
+        allowed_ips: allowedIps,
+      },
+    ],
   };
 
   if (mtu !== undefined) patch.mtu = mtu;
-  if (peer.PresharedKey) patch.pre_shared_key = String(peer.PresharedKey).trim();
+  if (keepalive !== undefined) {
+    patch.peers[0].persistent_keepalive_interval = keepalive;
+  }
+  if (peer.PresharedKey) {
+    patch.peers[0].preshared_key = String(peer.PresharedKey).trim();
+  }
 
-  // Legacy WireGuard outbound in sing-box 1.13 still parses `peers`, but
-  // peer objects do not accept `persistent_keepalive_interval`. Keep config
-  // minimal and valid for outbound mode.
-  patch.peers = [
-    {
-      server: host,
-      server_port: port,
-      public_key: publicKey,
-      ...(peer.PresharedKey ? { pre_shared_key: String(peer.PresharedKey).trim() } : {}),
-      allowed_ips: allowedIps,
-    },
+  const intMappings = [
+    ['Jc', 'jc'],
+    ['Jmin', 'jmin'],
+    ['Jmax', 'jmax'],
+    ['S1', 's1'],
+    ['S2', 's2'],
+    ['S3', 's3'],
+    ['S4', 's4'],
   ];
+  for (const [src, dst] of intMappings) {
+    if (iface[src] === undefined) continue;
+    const parsed = parseInteger(iface[src], `Interface ${src}`, errors);
+    if (parsed !== undefined) patch[dst] = parsed;
+  }
 
-  // Current amnezia-box JSON schema exposed in repo source does not contain
-  // AWG obfuscation fields (Jc/Jmin/S1...H4). Preserve them nowhere rather
-  // than emit invalid unknown fields. If fork later exposes JSON support,
-  // mapper can add them back.
-  void keepalive;
-  void awgArray;
+  const stringMappings = [
+    ['H1', 'h1'],
+    ['H2', 'h2'],
+    ['H3', 'h3'],
+    ['H4', 'h4'],
+    ['I1', 'i1'],
+    ['I2', 'i2'],
+    ['I3', 'i3'],
+    ['I4', 'i4'],
+    ['I5', 'i5'],
+  ];
+  for (const [src, dst] of stringMappings) {
+    const value = String(iface[src] || '').trim();
+    if (value) patch[dst] = value;
+  }
+
+  if (errors.length) {
+    const err = new Error('Invalid AmneziaWG config');
+    err.details = errors;
+    throw err;
+  }
 
   return patch;
 }

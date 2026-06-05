@@ -49,7 +49,7 @@ Script prompts for:
 - Pi-hole adlists are stored in gravity DB, not old `adlists.list`.
 - Pi-hole upstream is set to `127.0.0.1#5335`.
 - WebUI stays on backend `127.0.0.1:3001`, nginx fronts it on local domain.
-- VPN core is built from `amnezia-vpn/amnezia-box` `dev-next`, not installed from upstream sing-box apt repo.
-- Build uses tags `with_wireguard with_gvisor`; without them AWG/WireGuard outbound will not exist.
+- VPN core is built from `hoaxisr/amnezia-box` `main`, not installed from upstream sing-box apt repo.
+- Build uses tags `with_gvisor with_quic with_dhcp with_wireguard with_utls with_acme with_clash_api with_awg`; without `with_awg` real AWG endpoint type will not exist.
 - `wlan0` should be preconfigured by Raspberry Pi Imager; deploy script keeps it as rescue path by forcing higher route metric than `eth0`.
 - This Pi is a same-interface gateway: LAN clients enter on `eth0` and upstream internet also leaves via `eth0`. TPROXY needs extra sysctls here: `src_valid_mark=1`, `rp_filter=0`, `accept_local=1`, and `route_localnet=1`, or Linux may refuse to locally deliver intercepted foreign-destination packets to sing-box.
