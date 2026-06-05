@@ -21,6 +21,140 @@ function truthyParam(v) {
   return s === '1' || s === 'true' || s === 'yes';
 }
 
+function parseIniSections(text) {
+  const sections = {};
+  let current = null;
+  for (const rawLine of String(text || '').split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || line.startsWith(';')) continue;
+
+    const sectionMatch = line.match(/^\[([^\]]+)\]$/);
+    if (sectionMatch) {
+      current = sectionMatch[1].trim();
+      if (!sections[current]) sections[current] = [];
+      continue;
+    }
+
+    const eq = line.indexOf('=');
+    if (eq === -1 || !current) continue;
+
+    const key = line.slice(0, eq).trim();
+    const value = line.slice(eq + 1).trim();
+    sections[current].push([key, value]);
+  }
+  return sections;
+}
+
+function parseCsv(value) {
+  return String(value || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function parseInteger(value, field, errors) {
+  if (value === undefined || value === null || String(value).trim() === '') return undefined;
+  const n = Number(String(value).trim());
+  if (!Number.isInteger(n)) {
+    errors.push(`Invalid ${field}`);
+    return undefined;
+  }
+  return n;
+}
+
+function parseEndpoint(endpoint, errors) {
+  const value = String(endpoint || '').trim();
+  const idx = value.lastIndexOf(':');
+  if (idx <= 0 || idx === value.length - 1) {
+    errors.push('Invalid Endpoint in [Peer]');
+    return {};
+  }
+
+  const host = value.slice(0, idx).trim().replace(/^\[|\]$/g, '');
+  const port = Number(value.slice(idx + 1).trim());
+  if (!host) errors.push('Invalid Endpoint host');
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) errors.push('Invalid Endpoint port');
+
+  return {
+    host,
+    port,
+  };
+}
+
+function buildAwgArray(values) {
+  const keys = ['Jc', 'Jmin', 'Jmax', 'S1', 'S2', 'S3', 'S4', 'H1', 'H2', 'H3', 'H4'];
+  return keys.map((key) => values[key]).filter((value) => value !== undefined && value !== '');
+}
+
+function parseAmneziaWgConf(text) {
+  const sections = parseIniSections(text);
+  const ifaceEntries = sections.Interface || [];
+  const peerEntries = sections.Peer || [];
+  const errors = [];
+
+  if (!ifaceEntries.length) errors.push('Missing [Interface] section');
+  if (!peerEntries.length) errors.push('Missing [Peer] section');
+
+  const iface = Object.fromEntries(ifaceEntries);
+  const peer = Object.fromEntries(peerEntries);
+
+  const addresses = parseCsv(iface.Address);
+  if (!addresses.length) errors.push('Missing Interface Address');
+
+  const privateKey = String(iface.PrivateKey || '').trim();
+  if (!privateKey) errors.push('Missing Interface PrivateKey');
+
+  const publicKey = String(peer.PublicKey || '').trim();
+  if (!publicKey) errors.push('Missing Peer PublicKey');
+
+  const allowedIps = parseCsv(peer.AllowedIPs);
+  if (!allowedIps.length) errors.push('Missing Peer AllowedIPs');
+
+  const { host, port } = parseEndpoint(peer.Endpoint, errors);
+  const mtu = parseInteger(iface.MTU, 'Interface MTU', errors);
+  const keepalive = parseInteger(peer.PersistentKeepalive, 'Peer PersistentKeepalive', errors);
+
+  const awgValues = {};
+  for (const key of ['Jc', 'Jmin', 'Jmax', 'S1', 'S2', 'S3', 'S4', 'H1', 'H2', 'H3', 'H4']) {
+    if (iface[key] !== undefined) awgValues[key] = String(iface[key]).trim();
+  }
+  const awgArray = buildAwgArray(awgValues);
+
+  if (errors.length) {
+    const err = new Error('Invalid AmneziaWG config');
+    err.details = errors;
+    throw err;
+  }
+
+  const patch = {
+    type: 'wireguard',
+    local_address: addresses,
+    private_key: privateKey,
+    peers: [
+      {
+        server: host,
+        server_port: port,
+        public_key: publicKey,
+        allowed_ips: allowedIps,
+      },
+    ],
+  };
+
+  if (mtu !== undefined) patch.mtu = mtu;
+  if (keepalive !== undefined) {
+    patch.peers[0].persistent_keepalive_interval = keepalive;
+  }
+  if (peer.PresharedKey) {
+    patch.peers[0].pre_shared_key = String(peer.PresharedKey).trim();
+  }
+  if (awgArray.length) {
+    patch.awg = [{ ...awgValues }];
+    patch.peers[0].awg = awgArray;
+  }
+
+  return patch;
+}
+
 function normalizeRawOutbound(outbound) {
   if (!outbound || typeof outbound !== 'object' || Array.isArray(outbound)) {
     const err = new Error('Invalid outbound JSON');
@@ -220,6 +354,10 @@ function parseOutboundLink(link) {
     throw err;
   }
 
+  if (s.startsWith('[Interface]') || s.startsWith('[Peer]')) {
+    return parseAmneziaWgConf(s);
+  }
+
   if (s.startsWith('{')) {
     try {
       return normalizeRawOutbound(JSON.parse(s));
@@ -251,6 +389,7 @@ function parseOutboundLink(link) {
   err.details = [
     `Scheme "${scheme}" not supported yet`,
     'Supported links: vless://, tuic://',
+    'Supported config text: AmneziaWG/WireGuard .conf',
     'Or paste raw sing-box outbound JSON',
   ];
   throw err;

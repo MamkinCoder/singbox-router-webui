@@ -9,6 +9,7 @@ export default function VlessTab({ setStatus }) {
   const [templates, setTemplates] = useState([])
   const [templateName, setTemplateName] = useState('')
   const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
 
   const refresh = async () => {
     try {
@@ -37,6 +38,17 @@ export default function VlessTab({ setStatus }) {
     refresh()
     refreshTemplates()
   }, [])
+
+  const loadFile = async (file) => {
+    if (!file) return
+    try {
+      const text = await file.text()
+      setLink(text)
+      setStatus({ msg: `Loaded ${file.name}`, ok: true })
+    } catch (e) {
+      setStatus({ msg: `File load failed: ${cleanError(e)}`, ok: false })
+    }
+  }
 
   const apply = async () => {
     if (!link.trim()) return setStatus({ msg: 'Paste VPN link or outbound JSON first', ok: false })
@@ -110,11 +122,40 @@ export default function VlessTab({ setStatus }) {
             </button>
         </div>
         <div className="legacyRowBlock legacyRowBlockColumn">
+          <label
+            className="legacyRowBlockSubtitle"
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDragOver(true)
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault()
+              setDragOver(false)
+              const file = e.dataTransfer?.files?.[0]
+              if (file) loadFile(file)
+            }}
+            style={{
+              display: 'block',
+              marginBottom: 8,
+              padding: '10px 12px',
+              border: `1px dashed ${dragOver ? '#8fd3ff' : '#4b5563'}`,
+              borderRadius: 10,
+            }}
+          >
+            Drop `.conf` / `.json` file here or{' '}
+            <input
+              type="file"
+              accept=".conf,.json,.txt"
+              onChange={(e) => loadFile(e.target.files?.[0])}
+              style={{ display: 'inline-block' }}
+            />
+          </label>
           <textarea
             className="textarea legacyRowBlockInputs"
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            placeholder='vless://..., tuic://..., or {"type":"hysteria2",...}'
+            placeholder={'vless://..., tuic://..., AmneziaWG .conf, or {"type":"hysteria2",...}'}
           />
         </div>
         <div className="legacyRowBlock">

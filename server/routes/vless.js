@@ -29,15 +29,7 @@ function registerVlessRoutes(app) {
     const ob = Array.isArray(cfg.outbounds) ? cfg.outbounds.find((x) => x && x.tag === 'vpn') : null;
     if (!ob) return res.status(404).json({ error: 'No outbound with tag "vpn" found' });
 
-    res.json({
-      tag: ob.tag,
-      type: ob.type,
-      server: ob.server,
-      server_port: ob.server_port,
-      uuid: ob.uuid,
-      flow: ob.flow,
-      tls: ob.tls,
-    });
+    res.json(ob);
   });
 
   app.put('/sb/api/vless', async (req, res) => {
