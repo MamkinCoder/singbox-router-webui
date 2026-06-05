@@ -128,29 +128,35 @@ function parseAmneziaWgConf(text) {
 
   const patch = {
     type: 'wireguard',
+    server: host,
+    server_port: port,
     local_address: addresses,
     private_key: privateKey,
-    peers: [
-      {
-        server: host,
-        server_port: port,
-        public_key: publicKey,
-        allowed_ips: allowedIps,
-      },
-    ],
+    peer_public_key: publicKey,
   };
 
   if (mtu !== undefined) patch.mtu = mtu;
-  if (keepalive !== undefined) {
-    patch.peers[0].persistent_keepalive_interval = keepalive;
-  }
-  if (peer.PresharedKey) {
-    patch.peers[0].pre_shared_key = String(peer.PresharedKey).trim();
-  }
-  if (awgArray.length) {
-    patch.awg = [{ ...awgValues }];
-    patch.peers[0].awg = awgArray;
-  }
+  if (peer.PresharedKey) patch.pre_shared_key = String(peer.PresharedKey).trim();
+
+  // Legacy WireGuard outbound in sing-box 1.13 still parses `peers`, but
+  // peer objects do not accept `persistent_keepalive_interval`. Keep config
+  // minimal and valid for outbound mode.
+  patch.peers = [
+    {
+      server: host,
+      server_port: port,
+      public_key: publicKey,
+      ...(peer.PresharedKey ? { pre_shared_key: String(peer.PresharedKey).trim() } : {}),
+      allowed_ips: allowedIps,
+    },
+  ];
+
+  // Current amnezia-box JSON schema exposed in repo source does not contain
+  // AWG obfuscation fields (Jc/Jmin/S1...H4). Preserve them nowhere rather
+  // than emit invalid unknown fields. If fork later exposes JSON support,
+  // mapper can add them back.
+  void keepalive;
+  void awgArray;
 
   return patch;
 }
