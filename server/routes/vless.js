@@ -13,6 +13,7 @@ const {
 } = require('../templates');
 const { restartSingBox } = require('../helpers/singbox');
 const { normalizeSingBoxRoute } = require('../helpers/singboxConfig');
+const { getVpnTarget, setVpnTarget } = require('../helpers/vpnTarget');
 
 function respondConfigError(res, err) {
   return res.status(500).json({
@@ -26,10 +27,10 @@ function registerVlessRoutes(app) {
     const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
     if (!cfg) return respondConfigError(res, error);
 
-    const ob = Array.isArray(cfg.outbounds) ? cfg.outbounds.find((x) => x && x.tag === 'vpn') : null;
-    if (!ob) return res.status(404).json({ error: 'No outbound with tag "vpn" found' });
+    const target = getVpnTarget(cfg);
+    if (!target) return res.status(404).json({ error: 'No target with tag "vpn" found' });
 
-    res.json(ob);
+    res.json(target.value);
   });
 
   app.put('/sb/api/vless', async (req, res) => {
@@ -62,18 +63,10 @@ function registerVlessRoutes(app) {
 
     const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
     if (!cfg) return respondConfigError(res, error);
-    if (!Array.isArray(cfg.outbounds)) return res.status(500).json({ error: 'config.outbounds missing/invalid' });
-
-    const idx = cfg.outbounds.findIndex((x) => x && x.tag === 'vpn');
-    if (idx === -1) return res.status(404).json({ error: 'No outbound with tag "vpn" found' });
-
-    // Replace outbound body instead of deep-merging it. Reality links may
+    // Replace vpn target body instead of deep-merging it. Reality links may
     // intentionally omit fields like short_id, and merge would keep stale
     // values from an older config, causing handshake failures.
-    cfg.outbounds[idx] = {
-      tag: 'vpn',
-      ...patch,
-    };
+    setVpnTarget(cfg, patch);
     normalizeSingBoxRoute(cfg);
 
     await writeJsonWithSudoInstall(SINGBOX_CONFIG_PATH, cfg);

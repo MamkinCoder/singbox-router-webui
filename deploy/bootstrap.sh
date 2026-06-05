@@ -254,19 +254,27 @@ const { parseOutboundLink } = require(path.join(root, 'server', 'vless'));
 const { buildFlatRulesFromGroups } = require(path.join(root, 'server', 'helpers', 'domains'));
 const ui = JSON.parse(fs.readFileSync(path.join(root, 'deploy', 'seeds', 'vpn_domains_ui.json'), 'utf8'));
 const flat = buildFlatRulesFromGroups(ui);
-const vpnOutbound = link ? { tag: 'vpn', ...parseOutboundLink(link) } : { type: 'direct', tag: 'vpn' };
+const vpnTarget = link ? parseOutboundLink(link) : { type: 'direct' };
 const vpnEnabled = Boolean(link);
+const outbounds = [
+  { type: 'direct', tag: 'direct' },
+  { type: 'block', tag: 'block' }
+];
+const endpoints = [];
+
+if (vpnTarget.type === 'awg') {
+  endpoints.push({ tag: 'vpn', ...vpnTarget });
+} else {
+  outbounds.unshift({ tag: 'vpn', ...vpnTarget });
+}
+
 const cfg = {
   log: { level: 'warn', timestamp: true },
   inbounds: [
     { type: 'tproxy', tag: 'tproxy-in', listen: '0.0.0.0', listen_port: 12345 },
     { type: 'socks', tag: 'socks-in', listen: '127.0.0.1', listen_port: 1080 }
   ],
-  outbounds: [
-    vpnOutbound,
-    { type: 'direct', tag: 'direct' },
-    { type: 'block', tag: 'block' }
-  ],
+  outbounds,
   route: {
     final: 'direct',
     auto_detect_interface: false,
@@ -282,6 +290,7 @@ const cfg = {
     ]
   }
 };
+if (endpoints.length) cfg.endpoints = endpoints;
 fs.writeFileSync('/etc/sing-box/config.json', JSON.stringify(cfg, null, 2) + '\n');
 fs.writeFileSync('/etc/sing-box/rules/vpn_domains_ui.json', JSON.stringify(ui, null, 2) + '\n');
 fs.writeFileSync('/etc/sing-box/rules/vpn_domains.json', JSON.stringify(flat, null, 2) + '\n');
