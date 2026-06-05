@@ -87,9 +87,22 @@ sudo "$SINGBOX_BIN" run -c "$TMP_CFG" >"$TMP_LOG" 2>&1 &
 SB_PID=$!
 sleep 2
 
+echo "== proof process =="
+if kill -0 "$SB_PID" >/dev/null 2>&1; then
+  echo "proof sing-box pid=$SB_PID alive"
+else
+  echo "proof sing-box pid=$SB_PID exited early"
+fi
+
 echo "== curl via proof socks =="
+set +e
 curl --proxy "socks5h://127.0.0.1:${SOCKS_PORT}" "$TARGET_URL" --connect-timeout 10 --max-time 20
+CURL_STATUS=$?
+set -e
 printf '\n'
+echo "curl_exit=$CURL_STATUS"
 
 echo "== proof log tail =="
 tail -n 50 "$TMP_LOG"
+
+exit "$CURL_STATUS"
