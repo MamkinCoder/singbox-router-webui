@@ -37,4 +37,10 @@ sysctl \
   net.ipv4.conf.eth0.route_localnet || true
 
 echo "--- WebUI ---"
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  if curl -fsS -I --max-time 2 http://127.0.0.1:3001/; then
+    exit 0
+  fi
+  sleep 1
+done
 curl -I --max-time 5 http://127.0.0.1:3001/ || true
