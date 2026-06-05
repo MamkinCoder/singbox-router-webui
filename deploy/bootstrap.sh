@@ -17,6 +17,7 @@ SINGBOX_REPO="${SINGBOX_REPO:-https://github.com/amnezia-vpn/amnezia-box.git}"
 SINGBOX_REF="${SINGBOX_REF:-dev-next}"
 SINGBOX_SRC_DIR="${SINGBOX_SRC_DIR:-/usr/local/src/amnezia-box}"
 GO_VERSION="${GO_VERSION:-1.24.7}"
+SINGBOX_BUILD_TAGS="${SINGBOX_BUILD_TAGS:-with_wireguard with_gvisor}"
 TPROXY_TABLE_NAME="${TPROXY_TABLE_NAME:-tproxy}"
 TPROXY_TABLE_ID="${TPROXY_TABLE_ID:-100}"
 TPROXY_RULE_PREF="${TPROXY_RULE_PREF:-100}"
@@ -232,7 +233,10 @@ install_singbox() {
   git clone --depth 1 --branch "$SINGBOX_REF" "$SINGBOX_REPO" "$SINGBOX_SRC_DIR"
   (
     cd "$SINGBOX_SRC_DIR"
-    PATH="/usr/local/go/bin:$PATH" GOWORK=off /usr/local/go/bin/go build -trimpath -buildvcs=false -o /usr/bin/sing-box ./cmd/sing-box
+    PATH="/usr/local/go/bin:$PATH" GOWORK=off /usr/local/go/bin/go build \
+      -tags "$SINGBOX_BUILD_TAGS" \
+      -trimpath -buildvcs=false \
+      -o /usr/bin/sing-box ./cmd/sing-box
   )
 
   install -m 0644 "$DEPLOY_DIR/templates/sing-box.service" /etc/systemd/system/sing-box.service
