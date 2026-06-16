@@ -68,7 +68,7 @@ validate_local_domain() {
 
 install_packages() {
   apt-get update
-  apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates nodejs npm build-essential xz-utils
+  apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates nodejs npm build-essential xz-utils tcpdump
 }
 
 detect_go_arch() {
@@ -205,7 +205,9 @@ deploy_repo_files() {
   systemctl restart nftables
 
   install -m 0644 "$ROOT_DIR/singbox-router-webui.service" /etc/systemd/system/sb-webui.service
+  install -m 0644 "$DEPLOY_DIR/templates/sb-dhcp-names.service" /etc/systemd/system/sb-dhcp-names.service
   systemctl daemon-reload
+  systemctl enable sb-dhcp-names
 }
 
 install_webui_sudoers() {

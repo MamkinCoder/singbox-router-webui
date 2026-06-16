@@ -1,6 +1,9 @@
 'use strict';
 
 const { execFile } = require('child_process');
+const fs = require('fs');
+
+const { DHCP_NAMES_PATH } = require('../config');
 
 function execFileP(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
@@ -112,16 +115,27 @@ async function netbiosName(ip) {
   return '';
 }
 
-async function enrichClient(entry) {
+function readDhcpNameCache() {
+  try {
+    const data = JSON.parse(fs.readFileSync(DHCP_NAMES_PATH, 'utf8'));
+    return data && typeof data === 'object' && data.clients ? data.clients : {};
+  } catch {
+    return {};
+  }
+}
+
+async function enrichClient(entry, dhcpNames) {
+  const learned = dhcpNames[String(entry.mac || '').toLowerCase()] || {};
+  const learnedName = cleanHostname(learned.hostname || learned.name || '');
   const [dnsName, avahiName, nbName] = await Promise.all([
     reverseDnsName(entry.ip),
     mdnsName(entry.ip),
     netbiosName(entry.ip),
   ]);
   const vendor = vendorFromMac(entry.mac);
-  const hostname = dnsName || avahiName || nbName || '';
+  const hostname = learnedName || dnsName || avahiName || nbName || '';
   const deviceType = inferDeviceType({ hostname, vendor, mac: entry.mac });
-  const nameSource = dnsName ? 'rdns' : avahiName ? 'mdns' : nbName ? 'netbios' : vendor ? 'oui' : isPrivateMac(entry.mac) ? 'private-mac' : 'fallback';
+  const nameSource = learnedName ? 'dhcp' : dnsName ? 'rdns' : avahiName ? 'mdns' : nbName ? 'netbios' : vendor ? 'oui' : isPrivateMac(entry.mac) ? 'private-mac' : 'fallback';
 
   return {
     ...entry,
@@ -216,7 +230,8 @@ async function readLanClientsFromNeigh({ iface = 'eth0' } = {}) {
     active: isActiveState(e.state),
   }));
 
-  return Promise.all(rows.map(enrichClient));
+  const dhcpNames = readDhcpNameCache();
+  return Promise.all(rows.map((row) => enrichClient(row, dhcpNames)));
 }
 
 module.exports = { readLanClientsFromNeigh };

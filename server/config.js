@@ -7,6 +7,7 @@ const SINGBOX_CONFIG_PATH = process.env.SINGBOX_CONFIG_PATH || '/etc/sing-box/co
 const UI_DOMAINS_PATH = process.env.UI_DOMAINS_PATH || '/etc/sing-box/rules/vpn_domains_ui.json';
 const FLAT_RULESET_PATH = process.env.FLAT_RULESET_PATH || '/etc/sing-box/rules/vpn_domains.json';
 const CLIENTS_POLICY_PATH = process.env.CLIENTS_POLICY_PATH || '/etc/sing-box/clients_policy.json';
+const DHCP_NAMES_PATH = process.env.DHCP_NAMES_PATH || '/etc/sing-box/client_names.json';
 const FRONTEND_DIST = path.join(__dirname, '..', 'web', 'dist');
 const VLESS_TEMPLATES_DIR = process.env.VLESS_TEMPLATES_DIR || path.join(__dirname, '..', 'vless-templates');
 const TEMPLATE_NAME_RE = /^[a-zA-Z0-9._-]+\.json$/;
@@ -26,6 +27,7 @@ module.exports = {
   UI_DOMAINS_PATH,
   FLAT_RULESET_PATH,
   CLIENTS_POLICY_PATH,
+  DHCP_NAMES_PATH,
   FRONTEND_DIST,
   VLESS_TEMPLATES_DIR,
   TEMPLATE_NAME_RE,

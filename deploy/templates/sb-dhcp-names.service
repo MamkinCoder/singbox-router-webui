@@ -1,0 +1,19 @@
+[Unit]
+Description=Passive DHCP hostname learner for sb-webui
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/sb-webui
+Environment=SINGBOX_DEFAULT_INTERFACE=eth0
+Environment=DHCP_NAMES_PATH=/etc/sing-box/client_names.json
+ExecStart=/usr/bin/node /opt/sb-webui/server/dhcpNameListener.js
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
