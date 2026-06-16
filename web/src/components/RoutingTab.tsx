@@ -13,6 +13,21 @@ type RoutingTabProps = {
 
 type ClientMode = 'auto' | 'vpn' | 'direct'
 
+const DEVICE_ICON_OPTIONS = [
+  { id: 'desktop', label: 'Компьютер' },
+  { id: 'macos', label: 'Mac' },
+  { id: 'ios', label: 'iPhone / iPad' },
+  { id: 'android', label: 'Android' },
+  { id: 'linux', label: 'Linux' },
+  { id: 'telegram', label: 'Telegram' },
+  { id: 'terminal', label: 'Терминал' },
+  { id: 'globe', label: 'Сеть' },
+  { id: 'shield', label: 'VPN' },
+  { id: 'settings', label: 'Устройство' },
+  { id: 'user', label: 'Пользователь' },
+  { id: 'star', label: 'Избранное' },
+]
+
 function normalizeDomain(value: string): string | null {
   const next = value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^\.+/, '').replace(/\.$/, '')
   return next || null
@@ -25,6 +40,7 @@ function clientMode(client: LanClient): ClientMode {
 }
 
 function deviceIcon(client: LanClient): string {
+  if (client.icon) return client.icon
   if (['android', 'ios', 'linux', 'macos', 'desktop'].includes(client.deviceType)) return client.deviceType
   const haystack = `${client.name} ${client.displayName} ${client.vendor} ${client.mac}`.toLowerCase()
   if (haystack.includes('iphone') || haystack.includes('ipad')) return 'ios'
@@ -132,18 +148,60 @@ function GroupCard({ group, onChange, onDelete }: { group: DomainGroup; onChange
   )
 }
 
-function DeviceRow({ client, onMode, onUdp, onRename }: { client: LanClient; onMode: (mode: ClientMode) => void; onUdp: (enabled: boolean) => void; onRename: (name: string) => void }) {
+function IconPickerModal({ current, onPick, onClose }: { current: string; onPick: (icon: string) => void; onClose: () => void }) {
+  return (
+    <div className="modal-scrim" role="presentation" onClick={onClose}>
+      <div className="icon-modal" role="dialog" aria-modal="true" aria-labelledby="icon-picker-title" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <div>
+            <h3 id="icon-picker-title" className="panel-title">Иконка устройства</h3>
+            <p className="panel-sub">Выберите вручную. Это не меняет маршрутизацию.</p>
+          </div>
+          <Button tone="ghost" size="s" onClick={onClose}>Закрыть</Button>
+        </div>
+        <div className="icon-grid">
+          {DEVICE_ICON_OPTIONS.map((icon) => (
+            <button
+              key={icon.id}
+              className={`icon-choice ${current === icon.id ? 'active' : ''}`}
+              onClick={() => onPick(icon.id)}
+              type="button"
+            >
+              <span className="icon-choice-mark"><Ic name={icon.id} size={28} /></span>
+              <span>{icon.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeviceRow({ client, onMode, onUdp, onRename, onIcon }: { client: LanClient; onMode: (mode: ClientMode) => void; onUdp: (enabled: boolean) => void; onRename: (name: string) => void; onIcon: (icon: string) => void }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [pickingIcon, setPickingIcon] = useState(false)
   const [name, setName] = useState(client.name)
   const mode = clientMode(client)
+  const icon = deviceIcon(client)
 
   useEffect(() => setName(client.name), [client.name])
 
   return (
     <div className="device">
       <div className="device-main" onClick={() => setOpen((v) => !v)}>
-        <span className="device-ic"><Ic name={deviceIcon(client)} size={22} color="var(--text-secondary)" /></span>
+        <button
+          type="button"
+          className="device-ic device-ic-button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setPickingIcon(true)
+          }}
+          title="Выбрать иконку"
+          aria-label={`Выбрать иконку для ${client.name}`}
+        >
+          <Ic name={icon} size={22} color="var(--text-secondary)" />
+        </button>
         <div className="device-copy">
           <div className="device-name-row">
             <span className={client.currentIp ? 'dot-online' : 'dot-offline'} />
@@ -183,6 +241,16 @@ function DeviceRow({ client, onMode, onUdp, onRename }: { client: LanClient; onM
             <Switch checked={client.force_udp_vpn} disabled={mode !== 'vpn'} onChange={onUdp} label="Весь UDP через VPN" />
           </div>
         </div>
+      )}
+      {pickingIcon && (
+        <IconPickerModal
+          current={icon}
+          onClose={() => setPickingIcon(false)}
+          onPick={(nextIcon) => {
+            onIcon(nextIcon)
+            setPickingIcon(false)
+          }}
+        />
       )}
     </div>
   )
@@ -259,6 +327,7 @@ export default function RoutingTab({ vpn, onVpnChange, setStatus }: RoutingTabPr
         nameSource: lease?.nameSource || '',
         privateMac: !!lease?.privateMac,
         name: usefulName(record.name) || usefulName(lease?.displayName) || usefulName(lease?.hostname) || usefulName(lease?.clientId) || (lease?.ip ? `Устройство ${lease.ip.split('.').pop()}` : mac),
+        icon: record.icon || '',
         bypass_vpn: !!record.bypass_vpn,
         force_vpn: !!record.force_vpn,
         force_udp_vpn: !!record.force_udp_vpn,
@@ -300,6 +369,7 @@ export default function RoutingTab({ vpn, onVpnChange, setStatus }: RoutingTabPr
 
     const payload = {
       ...(overrides.name !== undefined ? { name: overrides.name } : {}),
+      ...(overrides.icon !== undefined ? { icon: overrides.icon } : {}),
       ...(overrides.bypass_vpn !== undefined ? { bypass_vpn: overrides.bypass_vpn } : {}),
       ...(overrides.force_vpn !== undefined ? { force_vpn: overrides.force_vpn } : {}),
       ...(overrides.force_udp_vpn !== undefined ? { force_udp_vpn: overrides.force_udp_vpn } : {}),
@@ -383,6 +453,7 @@ export default function RoutingTab({ vpn, onVpnChange, setStatus }: RoutingTabPr
               onMode={(mode) => setClientMode(client, mode)}
               onUdp={(enabled) => updateClient(client, { force_udp_vpn: enabled })}
               onRename={(name) => updateClient(client, { name })}
+              onIcon={(icon) => updateClient(client, { icon })}
             />
           )) : <div className="muted empty">LAN-устройства не найдены.</div>}
         </div>

@@ -5,11 +5,17 @@ import arrowRightIcon from './shadowlos/assets/icons/arrow-right.svg?url'
 import copyIcon from './shadowlos/assets/icons/copy.svg?url'
 import desktopIcon from './shadowlos/assets/icons/desktop.svg?url'
 import globeIcon from './shadowlos/assets/icons/globe.svg?url'
+import infoIcon from './shadowlos/assets/icons/info.svg?url'
 import iosIcon from './shadowlos/assets/icons/ios.svg?url'
 import keyIcon from './shadowlos/assets/icons/key.svg?url'
 import linuxIcon from './shadowlos/assets/icons/linux.svg?url'
 import macosIcon from './shadowlos/assets/icons/macos.svg?url'
+import settingsIcon from './shadowlos/assets/icons/settings.svg?url'
 import shieldIcon from './shadowlos/assets/icons/shield.svg?url'
+import starIcon from './shadowlos/assets/icons/star.svg?url'
+import telegramIcon from './shadowlos/assets/icons/telegram.svg?url'
+import terminalIcon from './shadowlos/assets/icons/terminal.svg?url'
+import userIcon from './shadowlos/assets/icons/user.svg?url'
 import logoUrl from './shadowlos/assets/logo/shadowlos-mark.svg'
 
 const iconUrls: Record<string, string> = {
@@ -18,11 +24,17 @@ const iconUrls: Record<string, string> = {
   copy: copyIcon,
   desktop: desktopIcon,
   globe: globeIcon,
+  info: infoIcon,
   ios: iosIcon,
   key: keyIcon,
   linux: linuxIcon,
   macos: macosIcon,
+  settings: settingsIcon,
   shield: shieldIcon,
+  star: starIcon,
+  telegram: telegramIcon,
+  terminal: terminalIcon,
+  user: userIcon,
 }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -83,7 +95,7 @@ type IconProps = {
 }
 
 export function Ic({ name, size = 24, color = 'currentColor', className = '' }: IconProps) {
-  const url = iconUrls[name]
+  const url = iconUrls[name] || iconUrls.desktop
   return (
     <img
       aria-hidden="true"

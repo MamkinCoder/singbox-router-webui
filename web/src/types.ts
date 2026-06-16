@@ -31,6 +31,7 @@ export type VpnState = {
 
 export type ClientRecord = {
   name?: string
+  icon?: string
   ip?: string
   bypass_vpn?: boolean
   force_vpn?: boolean
@@ -63,6 +64,7 @@ export type LanClient = {
   leaseState: string
   leaseActive: boolean
   name: string
+  icon: string
   displayName: string
   vendor: string
   deviceType: string

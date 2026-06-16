@@ -46,8 +46,24 @@ function registerClientsRoutes(app) {
 
   app.put('/sb/api/clients/:id', async (req, res) => {
     const id = normalizeMac(req.params.id);
-    const { name, force_vpn, force_udp_vpn, bypass_vpn } = req.body || {};
+    const { name, icon, force_vpn, force_udp_vpn, bypass_vpn } = req.body || {};
     const routingChanged = force_vpn !== undefined || force_udp_vpn !== undefined || bypass_vpn !== undefined;
+    const allowedIcons = new Set([
+      'android',
+      'desktop',
+      'globe',
+      'info',
+      'ios',
+      'key',
+      'linux',
+      'macos',
+      'settings',
+      'shield',
+      'star',
+      'telegram',
+      'terminal',
+      'user',
+    ]);
 
     try {
       if (!isValidMac(id)) {
@@ -58,9 +74,11 @@ function registerClientsRoutes(app) {
       const lease = findLease(leases, id);
       const pol = await readJsonSafe(CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY);
       pol.clients = pol.clients || {};
+      const previousClient = pol.clients[id] || {};
       const nextClient = {
-        ...(pol.clients[id] || {}),
+        ...previousClient,
         ...(name !== undefined ? { name: String(name) } : {}),
+        ...(icon !== undefined ? { icon: allowedIcons.has(String(icon)) ? String(icon) : '' } : {}),
         ...(force_vpn !== undefined ? { force_vpn: !!force_vpn } : {}),
         ...(force_udp_vpn !== undefined ? { force_udp_vpn: !!force_udp_vpn } : {}),
         ...(bypass_vpn !== undefined ? { bypass_vpn: !!bypass_vpn } : {}),
@@ -91,9 +109,13 @@ function registerClientsRoutes(app) {
       }
       pol.clients[id] = nextClient;
       const savedPolicy = buildEffectivePolicy(pol, leases);
+      const savedClient = savedPolicy.clients[id] || {};
+      const routingIpChanged = hasRoutingPolicy(savedClient) && savedClient.ip !== previousClient.ip;
 
       await writeJsonWithSudoInstall(CLIENTS_POLICY_PATH, savedPolicy);
-      await applyClientRouting(savedPolicy, leases);
+      if (routingChanged || routingIpChanged) {
+        await applyClientRouting(savedPolicy, leases);
+      }
       res.json({ ok: true, client: savedPolicy.clients[id] });
     } catch (error) {
       console.error('Failed to update client:', error);
