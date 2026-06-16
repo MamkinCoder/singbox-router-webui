@@ -234,7 +234,7 @@ button {
 .power.on {
   color: var(--blue-40);
   background: var(--accent-soft);
-  box-shadow: var(--stroke-inset), var(--glow-accent);
+  box-shadow: var(--stroke-inset);
 }
 
 .power-dot {
@@ -246,7 +246,9 @@ button {
 
 .power.on .power-dot {
   background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(0, 143, 255, 0.18);
+  box-shadow:
+    0 0 0 4px rgba(0, 143, 255, 0.16),
+    0 0 18px rgba(0, 143, 255, 0.42);
 }
 
 .tabsbar {

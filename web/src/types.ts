@@ -45,6 +45,11 @@ export type Lease = {
   mac: string
   ip?: string
   hostname?: string
+  displayName?: string
+  vendor?: string
+  deviceType?: string
+  nameSource?: string
+  privateMac?: boolean
   clientId?: string
   state?: string
   active?: boolean
@@ -58,6 +63,11 @@ export type LanClient = {
   leaseState: string
   leaseActive: boolean
   name: string
+  displayName: string
+  vendor: string
+  deviceType: string
+  nameSource: string
+  privateMac: boolean
   bypass_vpn: boolean
   force_vpn: boolean
   force_udp_vpn: boolean

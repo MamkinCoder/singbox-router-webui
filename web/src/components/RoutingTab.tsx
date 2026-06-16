@@ -25,12 +25,20 @@ function clientMode(client: LanClient): ClientMode {
 }
 
 function deviceIcon(client: LanClient): string {
-  const haystack = `${client.name} ${client.mac}`.toLowerCase()
+  if (['android', 'ios', 'linux', 'macos', 'desktop'].includes(client.deviceType)) return client.deviceType
+  const haystack = `${client.name} ${client.displayName} ${client.vendor} ${client.mac}`.toLowerCase()
   if (haystack.includes('iphone') || haystack.includes('ipad')) return 'ios'
   if (haystack.includes('android')) return 'android'
   if (haystack.includes('mac')) return 'macos'
+  if (haystack.includes('apple')) return 'macos'
   if (haystack.includes('linux')) return 'linux'
+  if (haystack.includes('raspberry')) return 'linux'
   return 'desktop'
+}
+
+function usefulName(value?: string): string {
+  const next = String(value || '').trim()
+  return next && next.toLowerCase() !== 'unknown' ? next : ''
 }
 
 function ModeSeg({ value, onChange, disabled = false }: { value: ClientMode; onChange: (mode: ClientMode) => void; disabled?: boolean }) {
@@ -141,7 +149,11 @@ function DeviceRow({ client, onMode, onUdp, onRename }: { client: LanClient; onM
             <span className={client.currentIp ? 'dot-online' : 'dot-offline'} />
             <span className="device-name">{client.name}</span>
           </div>
-          <div className="device-meta">{client.currentIp || `last ${client.lastKnownIp || 'unknown'}`} · {client.mac.toLowerCase()}</div>
+          <div className="device-meta">
+            {client.currentIp || `last ${client.lastKnownIp || 'unknown'}`} · {client.mac.toLowerCase()}
+            {client.vendor ? ` · ${client.vendor}` : ''}
+            {client.privateMac ? ' · private MAC' : ''}
+          </div>
         </div>
         <ModeSeg value={mode} onChange={onMode} />
         <Ic name="arrow-right" size={18} className={open ? 'rotate' : ''} />
@@ -241,7 +253,12 @@ export default function RoutingTab({ vpn, onVpnChange, setStatus }: RoutingTabPr
         lastKnownIp: record.ip || lease?.ip || '',
         leaseState: lease?.state || '',
         leaseActive: !!lease?.active,
-        name: record.name || lease?.hostname || lease?.clientId || lease?.ip || mac,
+        displayName: usefulName(lease?.displayName) || usefulName(lease?.hostname) || usefulName(lease?.clientId) || (lease?.ip ? `Устройство ${lease.ip.split('.').pop()}` : mac),
+        vendor: lease?.vendor || '',
+        deviceType: lease?.deviceType || '',
+        nameSource: lease?.nameSource || '',
+        privateMac: !!lease?.privateMac,
+        name: usefulName(record.name) || usefulName(lease?.displayName) || usefulName(lease?.hostname) || usefulName(lease?.clientId) || (lease?.ip ? `Устройство ${lease.ip.split('.').pop()}` : mac),
         bypass_vpn: !!record.bypass_vpn,
         force_vpn: !!record.force_vpn,
         force_udp_vpn: !!record.force_udp_vpn,
