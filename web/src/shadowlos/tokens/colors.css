@@ -1,0 +1,91 @@
+/* ============================================================
+   Shadowlos — Color tokens
+   Colors split into BASE (neutral grayscale) and ACCENT (hues).
+   The product is dark-first; semantic aliases below map to the
+   dark surface system used across the VPN mini-app.
+   ============================================================ */
+
+:root {
+  /* ---------- BASE / neutral scale ---------- */
+  --white: #FFFFFF;
+  --gray-5:  #F1F2F4;
+  --gray-10: #E2E6E9;
+  --gray-20: #C7CDD1;
+  --gray-40: #919AA1;
+  --gray-60: #5E676E;
+  --gray-70: #454E54;
+  --gray-80: #2C343A;
+  --gray-85: #232A2E;
+  --gray-90: #1A1F23;
+  --black:   #161A1D;
+
+  /* facet greys used in the stag mark */
+  --mark-steel: #8F9BA3;
+  --mark-shadow: #586874;
+
+  /* ---------- ACCENT / hues ---------- */
+  --blue-40: #33A5FF;
+  --blue-50: #008FFF;
+  --blue-60: #0072CC;
+  --blue-80: #1A374D;
+
+  --violet-40: #B180FF;
+  --violet-50: #8133FF;
+  --violet-60: #6200FF;
+
+  --green-40: #86D75E;
+  --green-50: #51A329;
+  --green-60: #3D7B1E;
+
+  --red-40: #FF453A;
+  --red-50: #CC0B00;
+  --red-60: #981B1B;
+
+  --yellow-40: #FFC633;
+  --yellow-50: #DAA10B;
+  --yellow-60: #A98016;
+
+  /* ---------- SEMANTIC (dark, default) ---------- */
+  /* surfaces, low → high elevation */
+  --surface-app:    var(--black);   /* screen background            */
+  --surface-raised: var(--gray-90); /* sheets, sections             */
+  --surface-card:   var(--gray-85); /* cards, list rows, inputs idle */
+  --surface-input:  var(--gray-85); /* form fields                  */
+  --surface-elevated: var(--gray-80); /* pressed rows, chips, hover  */
+  --surface-inverse: var(--gray-5);
+
+  /* hairlines & borders */
+  --border-hairline: rgba(255,255,255,0.10);
+  --border-strong:   var(--gray-80);
+  --border-muted:    var(--gray-70);
+
+  /* text */
+  --text-primary:   var(--gray-5);
+  --text-secondary: var(--gray-20);
+  --text-tertiary:  var(--gray-40);
+  --text-disabled:  var(--gray-60);
+  --text-inverse:   var(--black);
+  --text-link:      var(--blue-40);
+
+  /* primary action */
+  --accent:          var(--blue-50);
+  --accent-hover:    var(--blue-40);
+  --accent-pressed:  var(--blue-60);
+  --accent-on:       var(--white);
+  --accent-soft:     var(--blue-80);   /* tinted fill behind blue    */
+
+  /* status */
+  --success:        var(--green-50);
+  --success-bright: var(--green-40);
+  --warning:        var(--yellow-50);
+  --warning-bright: var(--yellow-40);
+  --danger:         var(--red-40);
+  --info:           var(--blue-40);
+
+  /* overlay / scrim */
+  --overlay-scrim: rgba(22,26,29,0.60);
+  --overlay-blur:  rgba(35,42,46,0.72);
+}
+
+/* Optional explicit dark scope (same as :root default) */
+:root[data-theme="dark"], .theme-dark { color-scheme: dark; }

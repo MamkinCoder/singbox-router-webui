@@ -1,0 +1,20 @@
+/* Shadowlos webfonts.
+   Primary UI face is PT Root UI (ParaType, commercial — not on Google Fonts).
+   SUBSTITUTED with Mulish (closest free humanist UI sans) until the real
+   licensed files are supplied. Secondary mono face PT Mono is the real family.
+   To use the genuine PT Root UI, drop the .woff2 files in assets/fonts/ and
+   replace the import below with @font-face rules pointing at them. */
+
+@import url('https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=PT+Mono&display=swap');
+
+/* Declare the genuine PT Root UI family. No binary ships with the system yet,
+   so this resolves to a locally-installed copy if the user has one; otherwise
+   the browser falls through to Mulish (next in the --font-ui stack). When the
+   licensed .woff2 files arrive, add url() sources here. */
+@font-face {
+  font-family: 'PT Root UI';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: local('PT Root UI'), local('PT Root UI Regular'), local('PTRootUI');
+}

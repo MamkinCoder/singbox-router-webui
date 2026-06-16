@@ -1,0 +1,51 @@
+/* ============================================================
+   Shadowlos — Typography tokens
+   Display/UI face: PT Root UI (substituted with Mulish).
+   Mono face: PT Mono. See tokens/fonts.css for the note.
+   ============================================================ */
+
+:root {
+  /* families */
+  --font-ui:   "PT Root UI", "Mulish", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "PT Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* weights */
+  --weight-light:   300;
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-bold:    700;
+
+  /* heading scale (line-height ~1.1) */
+  --size-h1: 32px;
+  --size-h2: 24px;
+  --size-h3: 20px;
+  --size-h4: 18px;
+  --size-h5: 16px;
+  --leading-heading: 1.1;
+
+  /* body scale (line-height ~1.4) */
+  --size-body-16: 16px;
+  --size-body-14: 14px;
+  --size-body-12: 12px;
+  --size-body-10: 10px;
+  --leading-body: 1.4;
+
+  /* big display (marketing posts) */
+  --size-display: 140px;
+  --leading-display: 1.0;
+}
+
+/* ---------- Type role helpers ----------
+   Use these classes for quick specimens / prototypes. In components,
+   reference the size/family/weight tokens directly. */
+.ty-display { font-family: var(--font-ui); font-weight: var(--weight-bold); font-size: var(--size-display); line-height: var(--leading-display); letter-spacing: -0.02em; }
+.ty-h1 { font-family: var(--font-ui); font-weight: var(--weight-bold); font-size: var(--size-h1); line-height: var(--leading-heading); }
+.ty-h2 { font-family: var(--font-ui); font-weight: var(--weight-bold); font-size: var(--size-h2); line-height: var(--leading-heading); }
+.ty-h3 { font-family: var(--font-ui); font-weight: var(--weight-bold); font-size: var(--size-h3); line-height: var(--leading-heading); }
+.ty-h4 { font-family: var(--font-ui); font-weight: var(--weight-bold); font-size: var(--size-h4); line-height: var(--leading-heading); }
+.ty-h5 { font-family: var(--font-ui); font-weight: var(--weight-bold); font-size: var(--size-h5); line-height: var(--leading-heading); }
+.ty-body { font-family: var(--font-ui); font-weight: var(--weight-regular); font-size: var(--size-body-16); line-height: var(--leading-body); }
+.ty-body-sm { font-family: var(--font-ui); font-weight: var(--weight-regular); font-size: var(--size-body-14); line-height: var(--leading-body); }
+.ty-caption { font-family: var(--font-ui); font-weight: var(--weight-regular); font-size: var(--size-body-12); line-height: var(--leading-body); }
+.ty-label { font-family: var(--font-ui); font-weight: var(--weight-medium); font-size: var(--size-body-14); line-height: var(--leading-body); }
+.ty-mono { font-family: var(--font-mono); font-weight: var(--weight-regular); font-size: var(--size-body-16); line-height: var(--leading-body); }

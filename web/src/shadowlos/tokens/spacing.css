@@ -1,0 +1,52 @@
+/* ============================================================
+   Shadowlos — Spacing, radius, shadow, layout tokens
+   Base grid unit = 4px. Layout collection: 4 8 12 16 24 32 36 40 48 56 64.
+   ============================================================ */
+
+:root {
+  /* spacing scale (4px grid) */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 36px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 56px;
+  --space-11: 64px;
+
+  /* corner radii (observed in components) */
+  --radius-xs: 8px;    /* chips, small tags            */
+  --radius-sm: 12px;   /* segmented control inner, mini */
+  --radius-md: 16px;   /* buttons, inputs, list rows    */
+  --radius-lg: 20px;   /* mode cards                    */
+  --radius-xl: 28px;   /* grouped panels                */
+  --radius-2xl: 48px;  /* large surface containers      */
+  --radius-full: 999px;/* pills, round buttons, avatars */
+
+  /* hairline used as inset stroke on cards / surfaces */
+  --stroke-inset: inset 0 0 0 1px var(--border-hairline);
+  --stroke-inset-strong: inset 0 0 0 1px var(--border-strong);
+
+  /* elevation — soft, low-contrast on dark */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.24);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.32);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,0.44);
+  /* blue glow used on the active VPN power control */
+  --glow-accent: 0 8px 32px rgba(0,143,255,0.45);
+
+  /* motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1); /* @kind other */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --dur-fast: 120ms; /* @kind other */
+  --dur-base: 200ms; /* @kind other */
+  --dur-slow: 320ms; /* @kind other */
+
+  /* mobile layout */
+  --screen-max: 420px;       /* mini-app content column   */
+  --gutter: 16px;            /* screen side padding       */
+  --tap-min: 44px;           /* min hit target            */
+}
