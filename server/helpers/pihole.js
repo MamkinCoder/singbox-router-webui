@@ -27,13 +27,19 @@ function cleanHostname(value) {
   if (!raw) return '';
   const first = raw.split(/\s+/)[0].replace(/\.$/, '');
   if (!first || first === 'localhost' || first === 'unknown') return '';
+  if (first === 'pi.hole' || first === 'pi-hole') return '';
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(first)) return '';
   return first;
 }
 
 function ipToName(ip) {
   const last = String(ip || '').split('.').pop();
-  return last ? `Device ${last}` : 'Device';
+  return last ? `Устройство ${last}` : 'Устройство';
+}
+
+function vendorName(vendor, ip) {
+  const last = String(ip || '').split('.').pop();
+  return vendor && last ? `${vendor} ${last}` : vendor;
 }
 
 function vendorFromMac(mac) {
@@ -123,7 +129,7 @@ async function enrichClient(entry) {
     vendor,
     deviceType,
     nameSource,
-    displayName: hostname || vendor || ipToName(entry.ip),
+    displayName: hostname || vendorName(vendor, entry.ip) || ipToName(entry.ip),
     privateMac: isPrivateMac(entry.mac),
   };
 }
