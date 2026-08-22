@@ -1,6 +1,6 @@
 'use strict';
 
-const { parseOutboundLink } = require('../vless');
+const { parseOutboundLink, extractLinkName } = require('../vless');
 const { readJsonSafe, readJsonDetailed, writeJsonWithSudoInstall } = require('../helpers/fs');
 const {
   SINGBOX_CONFIG_PATH,
@@ -14,6 +14,7 @@ const {
 const { restartSingBox } = require('../helpers/singbox');
 const { normalizeSingBoxRoute } = require('../helpers/singboxConfig');
 const { getVpnTarget, setVpnTarget } = require('../helpers/vpnTarget');
+const { saveActiveOutbound, describeActiveOutbound } = require('../helpers/activeOutbound');
 
 function respondConfigError(res, err) {
   return res.status(500).json({
@@ -36,11 +37,13 @@ function registerVlessRoutes(app) {
   app.put('/sb/api/vless', async (req, res) => {
     const templateId = req.body?.template_id;
     let link = req.body?.link || req.body?.vless;
+    let templateName = null;
 
     if (!link && templateId) {
       try {
         const tpl = await readTemplate(templateId);
         link = tpl.link || tpl.vless;
+        templateName = tpl.name || null;
       } catch (e) {
         if (e.code === 'ENOENT' || /Invalid template/.test(String(e.message))) {
           return res.status(404).json({ error: 'Template not found' });
@@ -70,9 +73,24 @@ function registerVlessRoutes(app) {
     normalizeSingBoxRoute(cfg);
 
     await writeJsonWithSudoInstall(SINGBOX_CONFIG_PATH, cfg);
+    await saveActiveOutbound({
+      name: templateName || extractLinkName(link),
+      link,
+      outbound: patch,
+      templateId: templateId || null,
+    });
     await restartSingBox();
 
-    res.json({ ok: true, updated: patch });
+    res.json({ ok: true, updated: patch, active: await describeActiveOutbound(cfg) });
+  });
+
+  app.get('/sb/api/vless/active', async (req, res) => {
+    const { data: cfg, error } = await readJsonDetailed(SINGBOX_CONFIG_PATH, null);
+    if (!cfg) return respondConfigError(res, error);
+
+    const active = await describeActiveOutbound(cfg);
+    if (!active) return res.status(404).json({ error: 'No target with tag "vpn" found' });
+    res.json(active);
   });
 
   app.get('/sb/api/vless/templates', async (req, res) => {

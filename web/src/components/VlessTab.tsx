@@ -2,21 +2,26 @@ import { useEffect, useRef, useState } from 'react'
 
 import api from '../api'
 import { Button, Ic, Tag } from '../shadowlos'
-import type { SetStatus, VlessTemplate } from '../types'
+import type { ActiveOutbound, SetStatus, VlessTemplate } from '../types'
 import { cleanError } from '../utils'
 
 function guessProto(tpl: VlessTemplate): string {
   const text = `${tpl.link || tpl.vless || ''} ${tpl.name || ''}`.trim()
-  const m = text.match(/^(vless|vmess|trojan|tuic|ss):\/\//i)
-  if (m) return m[1].toLowerCase()
-  if (/hysteria2/i.test(text)) return 'hysteria2'
+  const m = text.match(/^(vless|vmess|trojan|tuic|ss|hysteria2|hy2|hysteria|anytls|socks5?):\/\//i)
+  if (m) return m[1].toLowerCase().replace(/^hy2$/, 'hysteria2')
   if (/\[Interface\]/i.test(text)) return 'amneziawg'
   return 'config'
 }
 
-export default function VlessTab({ setStatus }: { setStatus: SetStatus }) {
+type VlessTabProps = {
+  setStatus: SetStatus
+  onRefresh: () => Promise<void> | void
+}
+
+export default function VlessTab({ setStatus, onRefresh }: VlessTabProps) {
   const [link, setLink] = useState('')
   const [current, setCurrent] = useState('')
+  const [active, setActive] = useState<ActiveOutbound | null>(null)
   const [templates, setTemplates] = useState<VlessTemplate[]>([])
   const [templateName, setTemplateName] = useState('')
   const [templatesLoading, setTemplatesLoading] = useState(false)
@@ -27,6 +32,11 @@ export default function VlessTab({ setStatus }: { setStatus: SetStatus }) {
     try {
       const cur = await api.get('/sb/api/vless')
       setCurrent(JSON.stringify(cur, null, 2))
+      try {
+        setActive(await api.get<ActiveOutbound>('/sb/api/vless/active'))
+      } catch {
+        setActive(null)
+      }
     } catch (e) {
       const message = cleanError(e)
       setCurrent(`Error: ${message}`)
@@ -69,6 +79,7 @@ export default function VlessTab({ setStatus }: { setStatus: SetStatus }) {
       setStatus({ msg: 'Конфигурация применена', ok: true })
       await refresh()
       await refreshTemplates()
+      await onRefresh()
     } catch (e) {
       setStatus({ msg: `VPN не применён: ${cleanError(e)}`, ok: false })
     }
@@ -93,6 +104,7 @@ export default function VlessTab({ setStatus }: { setStatus: SetStatus }) {
       await api.put('/sb/api/vless', { template_id: tpl.id })
       setStatus({ msg: `Применено: ${tpl.name}`, ok: true })
       await refresh()
+      await onRefresh()
     } catch (e) {
       setStatus({ msg: `Шаблон не применён: ${cleanError(e)}`, ok: false })
     }
@@ -125,7 +137,7 @@ export default function VlessTab({ setStatus }: { setStatus: SetStatus }) {
         <div className="section-head">
           <div>
             <h2 className="section-title">Своя конфигурация</h2>
-            <p className="section-sub">Вставьте свой ключ <span className="mono">vless://</span>, <span className="mono">tuic://</span>, <span className="mono">hysteria2</span> или JSON outbound.</p>
+            <p className="section-sub">Вставьте ключ <span className="mono">vless://</span>, <span className="mono">vmess://</span>, <span className="mono">trojan://</span>, <span className="mono">ss://</span>, <span className="mono">tuic://</span>, <span className="mono">hysteria2://</span>, <span className="mono">anytls://</span>, AmneziaWG <span className="mono">.conf</span> или JSON outbound.</p>
           </div>
         </div>
 
@@ -146,7 +158,7 @@ export default function VlessTab({ setStatus }: { setStatus: SetStatus }) {
               <input ref={fileRef} type="file" accept=".conf,.json,.txt" hidden onChange={(e) => loadFile(e.target.files?.[0])} />
             </label>
 
-            <textarea className="textarea mono" value={link} onChange={(e) => setLink(e.target.value)} placeholder={'vless://… · tuic://… · AmneziaWG .conf · {"type":"hysteria2", …}'} />
+            <textarea className="textarea mono" value={link} onChange={(e) => setLink(e.target.value)} placeholder={'vless://… · vmess://… · trojan://… · ss://… · hysteria2://… · AmneziaWG .conf · {"type":"hysteria2", …}'} />
 
             <div className="panel-actions">
               <Button tone="primary" iconLeft={<Ic name="shield" size={20} />} onClick={apply}>Применить и перезапустить</Button>
@@ -161,8 +173,8 @@ export default function VlessTab({ setStatus }: { setStatus: SetStatus }) {
 
           <div className="panel">
             <div className="panel-title-row">
-              <h3 className="panel-title">Текущий выход</h3>
-              <Tag tone="accent">tag=vpn</Tag>
+              <h3 className="panel-title">{active?.name || 'Текущий выход'}</h3>
+              <Tag tone="accent">{active ? `${active.protocol} · tag=vpn` : 'tag=vpn'}</Tag>
             </div>
             <pre className="pre">{current}</pre>
           </div>

@@ -10,6 +10,7 @@ const CLIENTS_POLICY_PATH = process.env.CLIENTS_POLICY_PATH || '/etc/sing-box/cl
 const DHCP_NAMES_PATH = process.env.DHCP_NAMES_PATH || '/etc/sing-box/client_names.json';
 const FRONTEND_DIST = path.join(__dirname, '..', 'web', 'dist');
 const VLESS_TEMPLATES_DIR = process.env.VLESS_TEMPLATES_DIR || path.join(__dirname, '..', 'vless-templates');
+const ACTIVE_OUTBOUND_PATH = process.env.ACTIVE_OUTBOUND_PATH || path.join(__dirname, '..', 'vless-active.json');
 const TEMPLATE_NAME_RE = /^[a-zA-Z0-9._-]+\.json$/;
 
 const DEFAULT_UI_DOMAINS = JSON.parse(
@@ -30,6 +31,7 @@ module.exports = {
   DHCP_NAMES_PATH,
   FRONTEND_DIST,
   VLESS_TEMPLATES_DIR,
+  ACTIVE_OUTBOUND_PATH,
   TEMPLATE_NAME_RE,
   DEFAULT_UI_DOMAINS,
   DEFAULT_CLIENTS_POLICY,

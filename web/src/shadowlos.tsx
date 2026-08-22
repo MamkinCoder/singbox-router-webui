@@ -114,16 +114,15 @@ export function Ic({ name, size = 24, color = 'currentColor', className = '' }: 
 export type Region = {
   id: string
   flag: string
+  emoji?: string
+  raw?: string
   name: string
   meta: string
   ping: string
 }
 
-export const REGIONS: Region[] = [
-  { id: 'current', flag: 'auto', name: 'Текущий VLESS', meta: 'outbound tag=vpn', ping: 'local' },
-]
-
-export function Flag({ code }: { code: string }) {
+export function Flag({ code = 'auto', emoji }: { code?: string; emoji?: string }) {
+  if (emoji) return <span className="flag emoji">{emoji}</span>
   const box = { className: 'flag', viewBox: '0 0 24 18', preserveAspectRatio: 'none' }
   if (code === 'nl') return <svg {...box}><rect width="24" height="6" fill="#AE1C28" /><rect y="6" width="24" height="6" fill="#fff" /><rect y="12" width="24" height="6" fill="#21468B" /></svg>
   if (code === 'de') return <svg {...box}><rect width="24" height="6" fill="#000" /><rect y="6" width="24" height="6" fill="#DD0000" /><rect y="12" width="24" height="6" fill="#FFCE00" /></svg>

@@ -21,6 +21,9 @@ SINGBOX_BUILD_TAGS="${SINGBOX_BUILD_TAGS:-with_gvisor with_quic with_dhcp with_w
 TPROXY_TABLE_NAME="${TPROXY_TABLE_NAME:-tproxy}"
 TPROXY_TABLE_ID="${TPROXY_TABLE_ID:-100}"
 TPROXY_RULE_PREF="${TPROXY_RULE_PREF:-100}"
+SKIP_PACKAGE_INSTALL="${SKIP_PACKAGE_INSTALL:-0}"
+SKIP_SINGBOX_BUILD="${SKIP_SINGBOX_BUILD:-0}"
+SKIP_WEBUI_BUILD="${SKIP_WEBUI_BUILD:-0}"
 
 require_root() {
   if [[ "${EUID}" -ne 0 ]]; then
@@ -67,6 +70,10 @@ validate_local_domain() {
 }
 
 install_packages() {
+  if [[ "$SKIP_PACKAGE_INSTALL" == "1" ]]; then
+    return
+  fi
+
   apt-get update
   apt-get install -y curl git jq sqlite3 nginx unbound nftables network-manager ca-certificates nodejs npm build-essential xz-utils tcpdump
 }
@@ -230,6 +237,12 @@ EOF
 }
 
 install_singbox() {
+  if [[ "$SKIP_SINGBOX_BUILD" == "1" && -x /usr/bin/sing-box ]]; then
+    install -m 0644 "$DEPLOY_DIR/templates/sing-box.service" /etc/systemd/system/sing-box.service
+    systemctl daemon-reload
+    return
+  fi
+
   install_go_toolchain
   rm -rf "$SINGBOX_SRC_DIR"
   git clone --depth 1 --branch "$SINGBOX_REF" "$SINGBOX_REPO" "$SINGBOX_SRC_DIR"
@@ -252,7 +265,8 @@ const path = require('path');
 const root = process.env.ROOT_DIR;
 const link = String(process.env.VLESS_LINK || '').trim();
 const iface = String(process.env.SINGBOX_DEFAULT_INTERFACE || 'eth0').trim();
-const { parseOutboundLink } = require(path.join(root, 'server', 'vless'));
+const { parseOutboundLink, extractLinkName } = require(path.join(root, 'server', 'vless'));
+const { saveActiveOutbound } = require(path.join(root, 'server', 'helpers', 'activeOutbound'));
 const { buildFlatRulesFromGroups } = require(path.join(root, 'server', 'helpers', 'domains'));
 const ui = JSON.parse(fs.readFileSync(path.join(root, 'deploy', 'seeds', 'vpn_domains_ui.json'), 'utf8'));
 const flat = buildFlatRulesFromGroups(ui);
@@ -297,11 +311,27 @@ fs.writeFileSync('/etc/sing-box/config.json', JSON.stringify(cfg, null, 2) + '\n
 fs.writeFileSync('/etc/sing-box/rules/vpn_domains_ui.json', JSON.stringify(ui, null, 2) + '\n');
 fs.writeFileSync('/etc/sing-box/rules/vpn_domains.json', JSON.stringify(flat, null, 2) + '\n');
 fs.writeFileSync('/etc/sing-box/clients_policy.json', JSON.stringify({ version: 1, clients: {} }, null, 2) + '\n');
+if (link) {
+  // Remember the "#name" of the seeded link so the WebUI header can show it.
+  saveActiveOutbound({ name: extractLinkName(link), link, outbound: vpnTarget });
+}
 NODE
+
+  if [[ -f "$ROOT_DIR/vless-active.json" ]]; then
+    chown "$SB_WEBUI_USER:$SB_WEBUI_USER" "$ROOT_DIR/vless-active.json"
+  fi
 }
 
 build_webui() {
   install -d -o "$SB_WEBUI_USER" -g "$SB_WEBUI_USER" "$ROOT_DIR/vless-templates"
+
+  if [[ "$SKIP_WEBUI_BUILD" == "1" ]]; then
+    test -f "$ROOT_DIR/web/dist/index.html"
+    test -d "$ROOT_DIR/node_modules"
+    chown -R "$SB_WEBUI_USER:$SB_WEBUI_USER" "$ROOT_DIR"
+    return
+  fi
+
   cd "$ROOT_DIR"
   npm install
   cd "$ROOT_DIR/web"

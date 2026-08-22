@@ -110,11 +110,17 @@ button {
   box-shadow: var(--stroke-inset);
 }
 
-.flag.auto {
+.flag.auto,
+.flag.emoji {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: var(--surface-elevated);
+}
+
+.flag.emoji {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .region {

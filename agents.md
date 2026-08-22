@@ -155,6 +155,39 @@ Policy routing:
 
 Routing rules are installed via **NetworkManager dispatcher**, not systemd hacks.
 
+### Same-interface TPROXY requirement (critical)
+
+This Pi is a **same-interface gateway**:
+
+- client traffic enters on `eth0`
+- upstream internet also leaves via `eth0`
+
+That means Linux may reject TPROXY-delivered packets as "not local" unless the router sysctls are relaxed.
+
+Required sysctls:
+
+```conf
+net.ipv4.ip_forward=1
+net.ipv4.conf.all.src_valid_mark=1
+net.ipv4.conf.default.src_valid_mark=1
+net.ipv4.conf.eth0.src_valid_mark=1
+net.ipv4.conf.lo.src_valid_mark=1
+net.ipv4.conf.all.rp_filter=0
+net.ipv4.conf.default.rp_filter=0
+net.ipv4.conf.eth0.rp_filter=0
+net.ipv4.conf.lo.rp_filter=0
+net.ipv4.conf.all.accept_local=1
+net.ipv4.conf.default.accept_local=1
+net.ipv4.conf.eth0.accept_local=1
+net.ipv4.conf.lo.accept_local=1
+net.ipv4.conf.all.route_localnet=1
+net.ipv4.conf.default.route_localnet=1
+net.ipv4.conf.eth0.route_localnet=1
+net.ipv4.conf.lo.route_localnet=1
+```
+
+If these are missing, nft can match and mark packets correctly, but the kernel may still refuse to locally deliver intercepted foreign-destination packets to sing-box.
+
 ---
 
 ## WebUI
@@ -193,8 +226,19 @@ API prefix:
 Important endpoints:
 
 - `/sb/api/domains`
-- `/sb/api/vless`
+- `/sb/api/vless` (+ `/sb/api/vless/active`, `/sb/api/vless/templates`)
 - `/sb/api/vpn`
+
+Outbound links are parsed by `server/vless.js`:
+
+- `vless://`, `vmess://`, `trojan://`, `ss://`, `tuic://`, `hysteria2://`, `hysteria://`, `anytls://`, `socks5://`
+- AmneziaWG/WireGuard `.conf` text (becomes an `endpoints[tag=vpn]` entry of type `awg`)
+- raw sing-box outbound JSON
+- transports: `tcp`/`raw`, `ws`, `http`/`h2`, `grpc`, `httpupgrade`, `quic`
+- **not** supported by sing-box, rejected with a clear error: `xhttp`/`splithttp`, `kcp`/`mkcp`, `ssr://`
+
+The human name of the active outbound (the `#tag` of the link) is stored in
+`/opt/sb-webui/vless-active.json` and shown in the WebUI header.
 
 ---
 

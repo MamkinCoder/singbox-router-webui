@@ -5,6 +5,7 @@ const fsp = fs.promises;
 const path = require('path');
 
 const { TEMPLATE_NAME_RE, VLESS_TEMPLATES_DIR } = require('./config');
+const { extractLinkName } = require('./vless');
 
 async function ensureDir() {
   await fsp.mkdir(VLESS_TEMPLATES_DIR, { recursive: true });
@@ -33,17 +34,6 @@ async function exists(file) {
   } catch {
     return false;
   }
-}
-
-function extractNameFromLink(link) {
-  try {
-    const parsed = new URL(link);
-    const hash = (parsed.hash || '').replace(/^#/, '').trim();
-    if (hash) return hash;
-  } catch {
-    // ignore
-  }
-  return null;
 }
 
 async function listTemplates() {
@@ -84,7 +74,7 @@ async function readTemplate(id) {
 async function saveTemplate({ name, link, vless }) {
   await ensureDir();
   const rawLink = String(link || vless || '').trim();
-  const displayName = String(name || '').trim() || extractNameFromLink(rawLink) || 'vpn-template';
+  const displayName = String(name || '').trim() || extractLinkName(rawLink) || 'vpn-template';
   const base = sanitizeTemplateFilename(displayName);
   let idx = 0;
   let candidate;

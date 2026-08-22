@@ -7,6 +7,7 @@ const {
   setVpnStateInConfig,
   getVpnStateFromConfig,
 } = require('../helpers/vpnState');
+const { describeActiveOutbound } = require('../helpers/activeOutbound');
 const { SINGBOX_CONFIG_PATH, CLIENTS_POLICY_PATH, DEFAULT_CLIENTS_POLICY } = require('../config');
 
 function respondConfigError(res, err) {
@@ -23,7 +24,7 @@ function registerVpnRoutes(app) {
 
     const { active, status } = await singBoxStatus();
     const { enabled, policy } = getVpnStateFromConfig(cfg);
-    res.json({ enabled, policy, active, status });
+    res.json({ enabled, policy, active, status, outbound: await describeActiveOutbound(cfg) });
   });
 
   app.put('/sb/api/vpn', async (req, res) => {
@@ -41,7 +42,7 @@ function registerVpnRoutes(app) {
 
     const { active, status } = await singBoxStatus();
     const state = getVpnStateFromConfig(cfg);
-    res.json({ ok: true, ...state, active, status });
+    res.json({ ok: true, ...state, active, status, outbound: await describeActiveOutbound(cfg) });
   });
 }
 

@@ -22,11 +22,20 @@ export type DomainsUi = {
 
 export type VpnPolicy = 'domains' | 'all'
 
+export type ActiveOutbound = {
+  name: string
+  protocol: string
+  server: string
+  type: string | null
+  source: 'applied' | 'template' | 'config'
+}
+
 export type VpnState = {
   enabled: boolean
   policy: VpnPolicy
   active: boolean | null
   status: string | null
+  outbound: ActiveOutbound | null
 }
 
 export type ClientRecord = {

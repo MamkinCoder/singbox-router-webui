@@ -19,7 +19,7 @@ function statusKind(status: StatusState): 'ok' | 'bad' | 'busy' | null {
 export default function App() {
   const [tab, setTab] = useState<AppTab>('routing')
   const [status, setStatus] = useState<StatusState>({ msg: 'Загружаем…', ok: null })
-  const [vpn, setVpn] = useState<VpnState>({ enabled: false, policy: 'domains', active: null, status: null })
+  const [vpn, setVpn] = useState<VpnState>({ enabled: false, policy: 'domains', active: null, status: null, outbound: null })
 
   const refreshVpn = useCallback(async () => {
     try {
@@ -29,6 +29,7 @@ export default function App() {
         policy: r.policy === 'all' ? 'all' : 'domains',
         active: typeof r.active === 'boolean' ? r.active : null,
         status: r.status ?? null,
+        outbound: r.outbound ?? null,
       })
     } catch (e) {
       setStatus({ msg: `Статус VPN не загружен: ${cleanError(e)}`, ok: false })
@@ -55,6 +56,7 @@ export default function App() {
         policy: r.policy === 'all' ? 'all' as const : 'domains' as const,
         active: typeof r.active === 'boolean' ? r.active : null,
         status: r.status ?? null,
+        outbound: r.outbound ?? null,
       }
       setVpn(updated)
       setStatus({
@@ -69,13 +71,13 @@ export default function App() {
 
   return (
     <div className="app">
-      <TopBar vpn={vpn} onVpnChange={updateVpn} setStatus={setStatus} />
+      <TopBar vpn={vpn} onVpnChange={updateVpn} onRefresh={refreshVpn} setStatus={setStatus} />
       <Tabs tab={tab} setTab={setTab} />
 
       <main className="main">
         <div className="wrap">
           {tab === 'routing' && <RoutingTab vpn={vpn} onVpnChange={updateVpn} setStatus={setStatus} />}
-          {tab === 'vless' && <VlessTab setStatus={setStatus} />}
+          {tab === 'vless' && <VlessTab setStatus={setStatus} onRefresh={refreshVpn} />}
         </div>
       </main>
 

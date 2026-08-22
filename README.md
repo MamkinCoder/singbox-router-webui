@@ -39,6 +39,7 @@ sudo bash deploy/verify.sh
 - Hooks/views:
   - `/sb/api/domains` – domain groups
   - `/sb/api/vless` – patch outbound via shared parser
+  - `/sb/api/vless/active` – name/protocol/server of the outbound currently tagged `vpn`
   - `/sb/api/vpn` – toggle mode/policy
   - `/sb/api/clients/leases` – optional DHCP data pulled from the router export script
 
@@ -52,7 +53,9 @@ sudo bash deploy/verify.sh
 
 - Keep the domain list source under version control; `buildFlatRulesFromGroups` regenerates `vpn_domains.json`.
 - If the UI reports validation errors from `/sb/api/vless`, the new parser in `server/vless.js` returns structured details so paste errors are visible.
-- VLESS input now runs extra validation: only known query params (`security`, `flow`, `sni`, `fp`, `pbk`, `sid`, `spx`, etc.) are accepted and templates are validated before they are saved. Typos triggered an unknown parameter error so you know why a string was rejected.
+- `server/vless.js` accepts `vless://`, `vmess://` (base64 JSON or URL form), `trojan://`, `ss://` (SIP002 + legacy base64), `tuic://`, `hysteria2://`/`hy2://`, `hysteria://`, `anytls://`, `socks5://`, AmneziaWG `.conf` text, and raw sing-box outbound JSON. Transports `tcp`/`raw`, `ws`, `http`/`h2`, `grpc`, `httpupgrade` and `quic` map onto sing-box `transport` objects; `xhttp`/`splithttp` and `kcp` are rejected with an explicit message because sing-box does not implement them.
+- Unknown query parameters (`hiddify`, `core`, `extra`, …) are ignored instead of failing the paste; only values sing-box cannot honour produce errors. Links are validated before templates are saved.
+- The `#name` of an applied link (or the saved template's name) is remembered in `vless-active.json` and surfaced through `/sb/api/vless/active` and `/sb/api/vpn`, which is what the header shows. If that file is stale (config edited by hand), the name falls back to a matching saved template, then to the outbound's SNI/server.
 - When debugging, follow the AGENTS guidance: check Unbound → Pi-hole DNS → sing-box → nftables.
 
 ## Router lease scraping
